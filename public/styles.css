@@ -1,0 +1,244 @@
+:root {
+  --bg-color: #0b0f19;
+  --card-bg: #161e2e;
+  --text-main: #f3f4f6;
+  --text-muted: #9ca3af;
+  --accent-color: #3b82f6;
+  --bus-color: #e11d48;
+  --train-color: #0284c7;
+  --border-color: #2d3748;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
+  height: 100vh;
+  overflow: hidden;
+  padding: 1.5rem;
+}
+
+.dashboard-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 1.5rem;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.time {
+  font-size: 4rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -1px;
+}
+
+.date {
+  font-size: 1.25rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+  text-transform: capitalize;
+}
+
+.weather-summary-header {
+  font-size: 2.25rem;
+  font-weight: 600;
+  display: flex;
+  gap: 1rem;
+  color: #fbbf24;
+}
+
+/* Layout Grid */
+.content-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  flex: 1;
+}
+
+.card {
+  background-color: var(--card-bg);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--border-color);
+}
+
+.card h2 {
+  font-size: 1.5rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 1rem;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 1rem;
+}
+
+.stop-name {
+  font-size: 1.2rem;
+  color: var(--accent-color);
+  font-weight: 600;
+}
+
+/* Weather UI */
+.current-weather {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.main-temp {
+  font-size: 5.5rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.condition {
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  text-transform: capitalize;
+}
+
+.high-low {
+  font-size: 1.25rem;
+  color: var(--text-muted);
+  display: flex;
+  gap: 1rem;
+}
+
+.card h3 {
+  font-size: 1.2rem;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+
+.forecast-3h {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.forecast-item {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  text-align: center;
+}
+
+.forecast-item .f-time {
+  font-size: 1.1rem;
+  color: var(--text-muted);
+}
+
+.forecast-item .f-temp {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0.5rem 0;
+}
+
+/* Transit List UI */
+.transit-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  overflow-y: auto;
+}
+
+.transit-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 0.85rem 1.25rem;
+  border-radius: 0.75rem;
+  border-left: 6px solid var(--accent-color);
+}
+
+.transit-item.bus {
+  border-left-color: var(--bus-color);
+}
+
+.transit-item.rail {
+  border-left-color: var(--train-color);
+}
+
+.transit-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  overflow: hidden;
+}
+
+.line-number {
+  font-size: 1.5rem;
+  font-weight: 800;
+  min-width: 3rem;
+  text-align: center;
+  background: #2d3748;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.4rem;
+}
+
+.destination {
+  font-size: 1.35rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.time-until {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #10b981;
+  white-space: nowrap;
+}
+
+.time-until.due {
+  color: #f59e0b;
+  animation: pulse 1.5s infinite;
+}
+
+.loading {
+  font-size: 1.25rem;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 2rem;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}

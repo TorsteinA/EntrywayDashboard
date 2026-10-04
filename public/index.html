@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Entry Dashboard</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="dashboard-container">
+      <!-- Header Section -->
+      <header class="header">
+        <div class="clock-display">
+          <div id="time" class="time">--:--</div>
+          <div id="date" class="date">Loading date...</div>
+        </div>
+        <div id="weather-summary-header" class="weather-summary-header">
+          <span id="header-temp">--°C</span>
+          <span id="header-condition">--</span>
+        </div>
+      </header>
+
+      <main class="content-grid">
+        <!-- Weather Column -->
+        <section class="card weather-card">
+          <h2>Weather Forecast</h2>
+          <div class="current-weather">
+            <div class="main-temp" id="current-temp">--°</div>
+            <div class="details">
+              <div id="condition-text" class="condition">Loading...</div>
+              <div class="high-low">
+                <span>H: <strong id="high-temp">--°</strong></span>
+                <span>L: <strong id="low-temp">--°</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <h3>Next 3 Hours</h3>
+          <div class="forecast-3h" id="forecast-3h">
+            <div class="loading">Fetching forecast...</div>
+          </div>
+        </section>
+
+        <!-- Public Transit Column -->
+        <section class="card transit-card">
+          <div class="card-header">
+            <h2>Next Departures</h2>
+            <span id="stop-name" class="stop-name">Lillestrøm</span>
+          </div>
+          <div id="transit-list" class="transit-list">
+            <div class="loading">Loading departures...</div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
