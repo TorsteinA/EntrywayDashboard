@@ -1,4 +1,29 @@
-// Clock and Date updates
+// Map common MET Norway symbol codes to Norwegian descriptions
+const weatherTranslations = {
+  clearsky: "Klarvær",
+  fair: "Lettskyet",
+  partlycloudy: "Delvis skyet",
+  cloudy: "Skyet",
+  rainshowers: "Regnbyger",
+  rainshowersandthunder: "Regnbyger og torden",
+  sleetshowers: "Sluddbyger",
+  snowshowers: "Snøbyger",
+  rain: "Regn",
+  heavyrain: "Kraftig regn",
+  heavyrainandthunder: "Kraftig regn og torden",
+  sleet: "Sludd",
+  snow: "Snø",
+  heavysnow: "Kraftig snø",
+  fog: "Tåke",
+};
+
+function translateSymbol(code) {
+  if (!code) return "";
+  const cleanCode = code.replace(/_(night|day|polarnight)/g, "").toLowerCase();
+  return weatherTranslations[cleanCode] || cleanCode.replace(/_/g, " ");
+}
+
+// Clock and Norwegian Date updates
 function updateClock() {
   const now = new Date();
 
@@ -8,9 +33,9 @@ function updateClock() {
     hour12: false,
   });
 
-  const dateStr = now.toLocaleDateString("en-US", {
+  const dateStr = now.toLocaleDateString("no-NO", {
     weekday: "long",
-    month: "short",
+    month: "long",
     day: "numeric",
   });
 
@@ -18,20 +43,11 @@ function updateClock() {
   document.getElementById("date").textContent = dateStr;
 }
 
-// Format API condition codes into cleaner labels
-function formatSymbol(code) {
-  if (!code) return "";
-  return code
-    .replace(/_/g, " ")
-    .replace(/night|day|polarnight/g, "")
-    .trim();
-}
-
 // Fetch and Render Weather Data
 async function fetchWeather() {
   try {
     const res = await fetch("/api/weather");
-    if (!res.ok) throw new Error("Weather fetch failed");
+    if (!res.ok) throw new Error("Vær-henting mislyktes");
 
     const data = await res.json();
     const timeseries = data.properties.timeseries;
@@ -44,14 +60,14 @@ async function fetchWeather() {
     const symbolCode =
       current.next_1_hours?.summary?.symbol_code ||
       current.next_6_hours?.summary?.symbol_code;
-    const conditionText = formatSymbol(symbolCode);
+    const conditionText = translateSymbol(symbolCode);
 
     document.getElementById("current-temp").textContent = `${currentTemp}°`;
     document.getElementById("header-temp").textContent = `${currentTemp}°C`;
     document.getElementById("condition-text").textContent = conditionText;
     document.getElementById("header-condition").textContent = conditionText;
 
-    // Today High / Low calculation (from first 24 hours of forecast)
+    // Today High / Low calculation
     const todaySeries = timeseries.slice(0, 24);
     let high = -Infinity;
     let low = Infinity;
@@ -88,17 +104,17 @@ async function fetchWeather() {
       forecastContainer.appendChild(item);
     }
   } catch (err) {
-    console.error("Error loading weather:", err);
+    console.error("Feil ved lasting av vær:", err);
   }
 }
 
-// Format Departure Countdown
+// Format Departure Countdown in Norwegian
 function formatDepartureTime(expectedTimeStr) {
   const now = new Date();
   const depTime = new Date(expectedTimeStr);
   const diffMinutes = Math.round((depTime - now) / 60000);
 
-  if (diffMinutes <= 0) return { text: "Now", isDue: true };
+  if (diffMinutes <= 0) return { text: "Nå", isDue: true };
   if (diffMinutes < 60)
     return { text: `${diffMinutes} min`, isDue: diffMinutes <= 2 };
 
@@ -111,11 +127,11 @@ function formatDepartureTime(expectedTimeStr) {
   };
 }
 
-// Fetch and Render Public Transit Data
+// Fetch and Render Public Transit Data (Max 2 departures)
 async function fetchTransit() {
   try {
     const res = await fetch("/api/transit", { method: "POST" });
-    if (!res.ok) throw new Error("Transit fetch failed");
+    if (!res.ok) throw new Error("Kollektiv-henting mislyktes");
 
     const data = await res.json();
     const stopPlace = data.data?.stopPlace;
@@ -130,15 +146,16 @@ async function fetchTransit() {
 
     if (calls.length === 0) {
       listContainer.innerHTML =
-        '<div class="loading">No upcoming departures found</div>';
+        '<div class="loading">Ingen kommende avganger funnet</div>';
       return;
     }
 
-    calls.forEach((call) => {
+    // Limit display strictly to the next 2 departures
+    calls.slice(0, 2).forEach((call) => {
       const line = call.serviceJourney.journeyPattern.line;
       const lineCode = line.publicCode || "";
       const transportMode = (line.transportMode || "bus").toLowerCase();
-      const destination = call.destinationDisplay?.frontText || "Unknown";
+      const destination = call.destinationDisplay?.frontText || "Ukjent";
       const timeInfo = formatDepartureTime(call.expectedDepartureTime);
 
       const item = document.createElement("div");
@@ -153,17 +170,17 @@ async function fetchTransit() {
       listContainer.appendChild(item);
     });
   } catch (err) {
-    console.error("Error loading transit data:", err);
+    console.error("Feil ved lasting av kollektivdata:", err);
   }
 }
 
-// Initial Loading & Auto-refresh Schedule
+// Initializing
 updateClock();
 setInterval(updateClock, 1000);
 
 fetchWeather();
 fetchTransit();
 
-// Periodic Refreshes
-setInterval(fetchTransit, 30 * 1000); // Refresh transit every 30 seconds
-setInterval(fetchWeather, 12 * 60 * 1000); // Refresh weather every 12 minutes
+// Refresh Intervals
+setInterval(fetchTransit, 30 * 1000); // 30 seconds
+setInterval(fetchWeather, 12 * 60 * 1000); // 12 minutes

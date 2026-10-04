@@ -5,12 +5,11 @@ const fetch = require("node-fetch");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configuration defaults (Lillestrøm Station coordinates & StopPlace ID)
+// Default configuration (Lillestrøm bussterminal / specific stop)
 const LAT = process.env.LAT || "59.9550";
 const LON = process.env.LON || "11.0500";
-const STOP_PLACE_ID = process.env.STOP_PLACE_ID || "NSR:StopPlace:58211"; // Lillestrøm stasjon
+const STOP_PLACE_ID = process.env.STOP_PLACE_ID || "NSR:StopPlace:58211";
 
-// Custom Headers required by APIs
 const USER_AGENT =
   process.env.USER_AGENT || "MyEntryDashboard/1.0 (admin@local.home)";
 const ET_CLIENT_NAME = process.env.ET_CLIENT_NAME || "myhome-entrykiosk";
@@ -18,38 +17,36 @@ const ET_CLIENT_NAME = process.env.ET_CLIENT_NAME || "myhome-entrykiosk";
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-// Proxy endpoint for MET Norway Weather API
+// Proxy for MET Norway Weather API
 app.get("/api/weather", async (req, res) => {
   try {
     const url = `https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${LAT}&lon=${LON}`;
     const response = await fetch(url, {
-      headers: {
-        "User-Agent": USER_AGENT,
-      },
+      headers: { "User-Agent": USER_AGENT },
     });
 
     if (!response.ok) {
       return res
         .status(response.status)
-        .json({ error: "Failed to fetch weather data" });
+        .json({ error: "Kunne ikke hente værdata" });
     }
 
     const data = await response.json();
     res.json(data);
   } catch (err) {
     console.error("Weather Proxy Error:", err);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: "Interne tjenerfeil" });
   }
 });
 
-// Proxy endpoint for Entur / Ruter GraphQL API
+// Proxy for Entur GraphQL API (Fetch 2 departures for the specific stop)
 app.post("/api/transit", async (req, res) => {
   try {
     const query = `
       query GetDepartures($id: String!) {
         stopPlace(id: $id) {
           name
-          estimatedCalls(numberOfDepartures: 8, timeRange: 7200) {
+          estimatedCalls(numberOfDepartures: 2, timeRange: 7200) {
             realtime
             aimedDepartureTime
             expectedDepartureTime
@@ -87,17 +84,17 @@ app.post("/api/transit", async (req, res) => {
     if (!response.ok) {
       return res
         .status(response.status)
-        .json({ error: "Failed to fetch transit data" });
+        .json({ error: "Kunne ikke hente kollektivdata" });
     }
 
     const data = await response.json();
     res.json(data);
   } catch (err) {
     console.error("Transit Proxy Error:", err);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: "Interne tjenerfeil" });
   }
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server kjører på port ${PORT}`);
 });

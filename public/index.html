@@ -1,18 +1,18 @@
 <!doctype html>
-<html lang="en">
+<html lang="no">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Entry Dashboard</title>
+    <title>Gang-dashboard</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <div class="dashboard-container">
-      <!-- Header Section -->
+      <!-- Overskrift -->
       <header class="header">
         <div class="clock-display">
           <div id="time" class="time">--:--</div>
-          <div id="date" class="date">Loading date...</div>
+          <div id="date" class="date">Laster dato...</div>
         </div>
         <div id="weather-summary-header" class="weather-summary-header">
           <span id="header-temp">--°C</span>
@@ -21,34 +21,34 @@
       </header>
 
       <main class="content-grid">
-        <!-- Weather Column -->
+        <!-- Vær-seksjon -->
         <section class="card weather-card">
-          <h2>Weather Forecast</h2>
+          <h2>Værvarsel</h2>
           <div class="current-weather">
             <div class="main-temp" id="current-temp">--°</div>
             <div class="details">
-              <div id="condition-text" class="condition">Loading...</div>
+              <div id="condition-text" class="condition">Laster...</div>
               <div class="high-low">
-                <span>H: <strong id="high-temp">--°</strong></span>
-                <span>L: <strong id="low-temp">--°</strong></span>
+                <span>Maks: <strong id="high-temp">--°</strong></span>
+                <span>Min: <strong id="low-temp">--°</strong></span>
               </div>
             </div>
           </div>
 
-          <h3>Next 3 Hours</h3>
+          <h3>Neste 3 timer</h3>
           <div class="forecast-3h" id="forecast-3h">
-            <div class="loading">Fetching forecast...</div>
+            <div class="loading">Henter værvarsel...</div>
           </div>
         </section>
 
-        <!-- Public Transit Column -->
+        <!-- Kollektiv-seksjon -->
         <section class="card transit-card">
           <div class="card-header">
-            <h2>Next Departures</h2>
-            <span id="stop-name" class="stop-name">Lillestrøm</span>
+            <h2>Neste avganger</h2>
+            <span id="stop-name" class="stop-name">Busstopp</span>
           </div>
           <div id="transit-list" class="transit-list">
-            <div class="loading">Loading departures...</div>
+            <div class="loading">Laster avganger...</div>
           </div>
         </section>
       </main>
