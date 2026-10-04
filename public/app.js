@@ -43,6 +43,34 @@ function updateClock() {
   document.getElementById("date").textContent = dateStr;
 }
 
+// Calculate Apparent / Perceived Temperature ("Føles som")
+function calculateFeelsLike(tempC, windSpeedMs, humidityPct) {
+  // Convert wind speed from m/s to km/h for standard meteorological formulas
+  const windKmH = windSpeedMs * 3.6;
+
+  // 1. Wind Chill (effective when temp <= 10°C and wind speed > 4.8 km/h)
+  if (tempC <= 10 && windKmH > 4.8) {
+    const feelsLike =
+      13.12 +
+      0.6215 * tempC -
+      11.37 * Math.pow(windKmH, 0.16) +
+      0.3965 * tempC * Math.pow(windKmH, 0.16);
+    return Math.round(feelsLike);
+  }
+
+  // 2. Heat / Humidity Index (effective when temp >= 20°C)
+  if (tempC >= 20) {
+    // Australian / Steadman Apparent Temperature formula using m/s
+    const e =
+      (humidityPct / 100) * 6.105 * Math.exp((17.27 * tempC) / (237.7 + tempC));
+    const feelsLike = tempC + 0.33 * e - 0.7 * windSpeedMs - 4.0;
+    return Math.round(feelsLike);
+  }
+
+  // Mild weather: perceived temp is roughly equal to actual temp
+  return Math.round(tempC);
+}
+
 // Fetch and Render Weather Data
 async function fetchWeather() {
   try {
@@ -54,15 +82,23 @@ async function fetchWeather() {
 
     if (!timeseries || timeseries.length === 0) return;
 
-    // Current weather
-    const current = timeseries[0].data;
-    const currentTemp = Math.round(current.instant.details.air_temperature);
+    // Current instant weather details
+    const currentDetails = timeseries[0].data.instant.details;
+    const currentTemp = Math.round(currentDetails.air_temperature);
+    const windSpeed = currentDetails.wind_speed || 0; // in m/s
+    const humidity = currentDetails.relative_humidity || 0; // in %
+
+    // Calculate "Føles som"
+    const feelsLikeTemp = calculateFeelsLike(currentTemp, windSpeed, humidity);
+
     const symbolCode =
-      current.next_1_hours?.summary?.symbol_code ||
-      current.next_6_hours?.summary?.symbol_code;
+      timeseries[0].data.next_1_hours?.summary?.symbol_code ||
+      timeseries[0].data.next_6_hours?.summary?.symbol_code;
     const conditionText = translateSymbol(symbolCode);
 
     document.getElementById("current-temp").textContent = `${currentTemp}°`;
+    document.getElementById("feels-like-temp").textContent =
+      `${feelsLikeTemp}°`;
     document.getElementById("header-temp").textContent = `${currentTemp}°C`;
     document.getElementById("condition-text").textContent = conditionText;
     document.getElementById("header-condition").textContent = conditionText;

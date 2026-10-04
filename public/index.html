@@ -3,12 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Gang-dashboard</title>
+    <title>Entré-dashboard</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <div class="dashboard-container">
-      <!-- Overskrift -->
       <header class="header">
         <div class="clock-display">
           <div id="time" class="time">--:--</div>
@@ -21,13 +20,17 @@
       </header>
 
       <main class="content-grid">
-        <!-- Vær-seksjon -->
         <section class="card weather-card">
           <h2>Værvarsel</h2>
           <div class="current-weather">
             <div class="main-temp" id="current-temp">--°</div>
             <div class="details">
               <div id="condition-text" class="condition">Laster...</div>
+              <div class="high-low">
+                <span
+                  >Føles som: <strong id="feels-like-temp">--°</strong></span
+                >
+              </div>
               <div class="high-low">
                 <span>Maks: <strong id="high-temp">--°</strong></span>
                 <span>Min: <strong id="low-temp">--°</strong></span>
@@ -41,7 +44,6 @@
           </div>
         </section>
 
-        <!-- Kollektiv-seksjon -->
         <section class="card transit-card">
           <div class="card-header">
             <h2>Neste avganger</h2>
