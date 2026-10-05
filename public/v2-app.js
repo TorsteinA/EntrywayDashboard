@@ -5,7 +5,8 @@ const favoriteLocations = [
   { name: "Asker", lat: 59.8338, lon: 10.4354 },
 ];
 
-const TARGET_DESTINATION = "Blystadlia";
+// Destination to filter OUT (incoming buses)
+const EXCLUDE_DESTINATION = "Vardefjellet";
 
 // Map MET Norway symbol codes to Norwegian display labels
 const weatherTranslations = {
@@ -30,8 +31,6 @@ function translateSymbol(code) {
 // Calculate perceived temperature ("Føles som")
 function calculateFeelsLike(tempC, windSpeedMs, humidityPct) {
   const windKmH = windSpeedMs * 3.6;
-
-  // Cold weather wind chill formula
   if (tempC <= 10 && windKmH > 4.8) {
     return Math.round(
       13.12 +
@@ -40,17 +39,15 @@ function calculateFeelsLike(tempC, windSpeedMs, humidityPct) {
         0.3965 * tempC * Math.pow(windKmH, 0.16),
     );
   }
-  // Warm weather apparent temperature formula
   if (tempC >= 20) {
     const e =
       (humidityPct / 100) * 6.105 * Math.exp((17.27 * tempC) / (237.7 + tempC));
     return Math.round(tempC + 0.33 * e - 0.7 * windSpeedMs - 4.0);
   }
-
   return Math.round(tempC);
 }
 
-// Update clock and Norwegian formatted date
+// Update clock and date
 function updateClock() {
   const now = new Date();
   document.getElementById("time").textContent = now.toLocaleTimeString(
@@ -89,7 +86,7 @@ async function fetchHomeWeather() {
     document.getElementById("humidity").textContent = `${humidity}%`;
     document.getElementById("wind-speed").textContent = `${windSpeed} m/s`;
 
-    // Calculate high/low for today
+    // High / Low for today
     let high = -Infinity,
       low = Infinity;
     timeseries.slice(0, 24).forEach((ts) => {
@@ -100,7 +97,7 @@ async function fetchHomeWeather() {
     document.getElementById("high-temp").textContent = `${Math.round(high)}°`;
     document.getElementById("low-temp").textContent = `${Math.round(low)}°`;
 
-    // Render 3-hour forecast
+    // 3-hour forecast
     const forecastContainer = document.getElementById("forecast-3h");
     forecastContainer.innerHTML = "";
     for (let i = 1; i <= 3; i++) {
@@ -124,7 +121,7 @@ async function fetchHomeWeather() {
   }
 }
 
-// Fetch weather cards for secondary favorite locations
+// Fetch travel weather for favorite locations (+2h forecast & today's range)
 async function fetchFavoriteWeather() {
   const container = document.getElementById("favorites-list");
   container.innerHTML = "";
@@ -136,26 +133,47 @@ async function fetchFavoriteWeather() {
       );
       if (!res.ok) continue;
       const data = await res.json();
-      const current = data.properties.timeseries[0].data;
-      const temp = Math.round(current.instant.details.air_temperature);
+      const timeseries = data.properties.timeseries;
+      if (!timeseries?.length) continue;
 
-      const next1h = current.next_1_hours;
+      // Arrival forecast (~2 hours ahead)
+      const arrivalData = timeseries[2] || timeseries[0];
+      const arrivalTemp = Math.round(
+        arrivalData.data.instant.details.air_temperature,
+      );
       const symbolCode =
-        next1h?.summary?.symbol_code ||
-        current.next_6_hours?.summary?.symbol_code;
-      const prob = next1h?.details?.probability_of_precipitation;
+        arrivalData.data.next_1_hours?.summary?.symbol_code ||
+        arrivalData.data.next_6_hours?.summary?.symbol_code;
+
+      const prob =
+        arrivalData.data.next_1_hours?.details?.probability_of_precipitation;
       const precipText =
         prob !== undefined ? `${Math.round(prob)}% regn` : "0% regn";
 
+      // Calculate today's High / Low for packing advice
+      let high = -Infinity,
+        low = Infinity;
+      timeseries.slice(0, 24).forEach((ts) => {
+        const t = ts.data.instant.details.air_temperature;
+        if (t > high) high = t;
+        if (t < low) low = t;
+      });
+
+      const arrivalTime = new Date(arrivalData.time).toLocaleTimeString(
+        "no-NO",
+        { hour: "2-digit", minute: "2-digit" },
+      );
+
       const item = document.createElement("div");
-      item.className = "fav-item";
+      item.className = "fav-card-item";
       item.innerHTML = `
         <div class="fav-left">
           <span class="fav-name">${loc.name}</span>
-          <span class="fav-cond">${translateSymbol(symbolCode)}</span>
+          <span class="fav-arrival-info">Kl. ${arrivalTime}: ${translateSymbol(symbolCode)}</span>
         </div>
         <div class="fav-right">
-          <span class="fav-temp">${temp}°</span>
+          <span class="fav-temp">${arrivalTemp}°</span>
+          <span class="fav-range">Dag: ${Math.round(high)}° / ${Math.round(low)}°</span>
           <span class="fav-precip">${precipText}</span>
         </div>
       `;
@@ -166,7 +184,7 @@ async function fetchFavoriteWeather() {
   }
 }
 
-// Fetch public transit departures
+// Fetch public transit departures (skipping incoming buses)
 async function fetchTransit() {
   try {
     const res = await fetch("/api/transit", { method: "POST" });
@@ -175,17 +193,15 @@ async function fetchTransit() {
     const stopPlace = data.data?.stopPlace;
     let calls = stopPlace?.estimatedCalls || [];
 
-    if (stopPlace?.name) {
+    if (stopPlace?.name)
       document.getElementById("stop-name").textContent = stopPlace.name;
-    }
 
-    // Filter by destination if TARGET_DESTINATION is defined
-    if (TARGET_DESTINATION) {
-      calls = calls.filter((call) =>
-        call.destinationDisplay?.frontText
-          ?.toLowerCase()
-          .includes(TARGET_DESTINATION.toLowerCase()),
-      );
+    // Invert check: Filter out incoming buses heading to Vardefjellet
+    if (EXCLUDE_DESTINATION) {
+      calls = calls.filter((call) => {
+        const dest = call.destinationDisplay?.frontText || "";
+        return !dest.toLowerCase().includes(EXCLUDE_DESTINATION.toLowerCase());
+      });
     }
 
     const listContainer = document.getElementById("transit-list");
@@ -193,11 +209,11 @@ async function fetchTransit() {
 
     if (!calls.length) {
       listContainer.innerHTML =
-        '<div class="loading">Ingen avganger funnet</div>';
+        '<div class="loading">Ingen utgående avganger funnet</div>';
       return;
     }
 
-    // Always display top 2 matching departures
+    // Render next 2 outward departures
     calls.slice(0, 2).forEach((call) => {
       const lineCode = call.serviceJourney.journeyPattern.line.publicCode || "";
       const destination = call.destinationDisplay?.frontText || "Ukjent";
@@ -223,7 +239,7 @@ async function fetchTransit() {
   }
 }
 
-// Initialize application
+// Initializing
 updateClock();
 setInterval(updateClock, 1000);
 
@@ -231,7 +247,7 @@ fetchHomeWeather();
 fetchFavoriteWeather();
 fetchTransit();
 
-// Set refresh intervals
+// Intervals
 setInterval(fetchTransit, 30 * 1000);
 setInterval(fetchHomeWeather, 12 * 60 * 1000);
 setInterval(fetchFavoriteWeather, 15 * 60 * 1000);
