@@ -35,6 +35,27 @@ app.get("/api/weather", async (req, res) => {
     res.json(data);
   } catch (err) {
     console.error("Weather Proxy Error:", err);
+    res.status(500).json({ error: "Intern tjenerfeil" });
+  }
+});
+
+app.get("/api/weather/custom", async (req, res) => {
+  const { lat, lon } = req.query;
+  if (!lat || !lon)
+    return res.status(400).json({ error: "Mangler lat/lon parametere" });
+
+  try {
+    const url = `https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat}&lon=${lon}`;
+    const response = await fetch(url, {
+      headers: { "User-Agent": USER_AGENT },
+    });
+    if (!response.ok)
+      return res
+        .status(response.status)
+        .json({ error: "Kunne ikke hente værdata" });
+    const data = await response.json();
+    res.json(data);
+  } catch (err) {
     res.status(500).json({ error: "Interne tjenerfeil" });
   }
 });
@@ -91,7 +112,7 @@ app.post("/api/transit", async (req, res) => {
     res.json(data);
   } catch (err) {
     console.error("Transit Proxy Error:", err);
-    res.status(500).json({ error: "Interne tjenerfeil" });
+    res.status(500).json({ error: "Intern tjenerfeil" });
   }
 });
 

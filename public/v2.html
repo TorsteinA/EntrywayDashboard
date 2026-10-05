@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="no">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gang-dashboard V2</title>
+    <link rel="stylesheet" href="v2-styles.css" />
+  </head>
+  <body>
+    <div class="dashboard-container">
+      <!-- TOP ROW (25% Height - Directly on background) -->
+      <header class="top-row">
+        <!-- Top Left (~30% width) -->
+        <div class="clock-section">
+          <div id="time" class="time">--:--</div>
+          <div id="date" class="date">Laster dato...</div>
+        </div>
+
+        <!-- Top Right (~70% width) -->
+        <div class="transit-section">
+          <div class="transit-header">
+            <h2>NESTE AVGANGER</h2>
+            <span id="stop-name" class="stop-name">Busstopp</span>
+          </div>
+          <div id="transit-list" class="transit-list">
+            <div class="loading">Laster avganger...</div>
+          </div>
+        </div>
+      </header>
+
+      <!-- BOTTOM ROW (75% Height - Combined Card Container) -->
+      <main class="bottom-row">
+        <section class="card combined-card">
+          <!-- Bottom Left: Home Weather (~65% width) -->
+          <div class="home-weather-section">
+            <div class="card-title">VÆRET HJEMME</div>
+
+            <div class="current-weather">
+              <div class="main-temp" id="current-temp">--°</div>
+              <div class="weather-details">
+                <div id="condition-text" class="condition">Laster...</div>
+                <div class="sub-detail">
+                  Føles som: <strong id="feels-like-temp">--°</strong>
+                </div>
+                <div class="sub-detail">
+                  Maks / Min: <strong id="high-temp">--°</strong> /
+                  <strong id="low-temp">--°</strong>
+                </div>
+              </div>
+            </div>
+
+            <div class="metrics-row">
+              <div class="metric-item">
+                Fuktighet: <strong id="humidity">--%</strong>
+              </div>
+              <div class="metric-item">
+                Vind: <strong id="wind-speed">-- m/s</strong>
+              </div>
+            </div>
+
+            <div class="forecast-section">
+              <h3>Neste 3 timer</h3>
+              <div id="forecast-3h" class="forecast-3h">
+                <!-- Rendered via JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Vertical Divider -->
+          <div class="card-divider"></div>
+
+          <!-- Bottom Right: Favorite Places (~35% width) -->
+          <div class="favorites-section">
+            <div class="card-title">SJEKK STEDER</div>
+            <div id="favorites-list" class="favorites-list">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="v2-app.js"></script>
+  </body>
+</html>

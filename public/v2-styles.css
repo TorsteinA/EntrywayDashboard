@@ -1,0 +1,344 @@
+:root {
+  --bg-color: #0b0f19;
+  --card-bg: #161e2e;
+  --text-main: #f3f4f6;
+  --text-muted: #9ca3af;
+  --accent-color: #3b82f6;
+  --bus-color: #e11d48;
+  --border-color: #2d3748;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
+  height: 100vh;
+  padding: 1.25rem;
+  overflow: hidden;
+}
+
+.dashboard-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 1.25rem;
+}
+
+/* ==========================================================================
+   TOP ROW (~25% height) - Directly on background
+   ========================================================================== */
+.top-row {
+  display: flex;
+  height: 25%;
+  gap: 2rem;
+  align-items: center;
+}
+
+/* Clock & Date */
+.clock-section {
+  flex: 0 0 28%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.time {
+  font-size: 4.8rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -1px;
+}
+
+.date {
+  font-size: 1.35rem;
+  color: var(--text-muted);
+  margin-top: 0.35rem;
+  text-transform: capitalize;
+}
+
+/* Transit Section */
+.transit-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%;
+}
+
+.transit-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.5rem;
+}
+
+.transit-header h2 {
+  font-size: 1.25rem;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.stop-name {
+  font-size: 1.15rem;
+  color: var(--accent-color);
+  font-weight: 600;
+}
+
+.transit-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Bus Departure Cards directly on background */
+.transit-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--card-bg);
+  padding: 0.75rem 1.25rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-left: 6px solid var(--bus-color);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.transit-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.line-number {
+  font-size: 1.35rem;
+  font-weight: 800;
+  min-width: 3rem;
+  text-align: center;
+  background: #2d3748;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.4rem;
+}
+
+.destination {
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.time-until {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #10b981;
+}
+
+.time-until.due {
+  color: #f59e0b;
+  animation: pulse 1.5s infinite;
+}
+
+/* ==========================================================================
+   BOTTOM ROW (~75% height) - Large Combined Card
+   ========================================================================== */
+.bottom-row {
+  flex: 1;
+  height: 75%;
+}
+
+.combined-card {
+  background-color: var(--card-bg);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  display: flex;
+  height: 100%;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 10px 20px -3px rgba(0, 0, 0, 0.5);
+}
+
+.card-title {
+  font-size: 1.3rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+/* Left Section: Home Weather (~65%) */
+.home-weather-section {
+  flex: 0 0 63%;
+  display: flex;
+  flex-direction: column;
+  padding-right: 1.5rem;
+}
+
+.current-weather {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: 1rem;
+}
+
+.main-temp {
+  font-size: 5rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.condition {
+  font-size: 1.6rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  margin-bottom: 0.25rem;
+}
+
+.sub-detail {
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  margin-top: 0.1rem;
+}
+
+.sub-detail strong {
+  color: var(--text-main);
+}
+
+.metrics-row {
+  display: flex;
+  gap: 2.5rem;
+  font-size: 1.2rem;
+  color: var(--text-muted);
+  margin-bottom: 1.25rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.metrics-row strong {
+  color: var(--text-main);
+}
+
+.forecast-section {
+  margin-top: auto;
+}
+
+.forecast-section h3 {
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+}
+
+.forecast-3h {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.forecast-item {
+  background: rgba(255, 255, 255, 0.03);
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-color);
+  text-align: center;
+}
+
+.forecast-item .f-time {
+  font-size: 1rem;
+  color: var(--text-muted);
+}
+
+.forecast-item .f-temp {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-top: 0.2rem;
+}
+
+/* Card Separator Divider */
+.card-divider {
+  width: 1px;
+  background-color: var(--border-color);
+  margin: 0 1.5rem;
+  align-self: stretch;
+}
+
+/* Right Section: Favorite Places Stack (~35%) */
+.favorites-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding-left: 0.5rem;
+}
+
+.favorites-list {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  flex: 1;
+}
+
+.fav-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+}
+
+.fav-item:not(:last-child) {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.fav-left {
+  display: flex;
+  flex-direction: column;
+}
+
+.fav-name {
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.fav-cond {
+  font-size: 1.05rem;
+  color: var(--text-muted);
+  text-transform: capitalize;
+  margin-top: 0.15rem;
+}
+
+.fav-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.fav-temp {
+  font-size: 1.8rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.fav-precip {
+  font-size: 1.05rem;
+  color: var(--accent-color);
+  margin-top: 0.25rem;
+}
+
+.loading {
+  font-size: 1.1rem;
+  color: var(--text-muted);
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
