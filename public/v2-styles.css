@@ -64,42 +64,43 @@ body {
   text-transform: capitalize;
 }
 
-/* Transit Section */
+/* Transit Section: Side-by-side (Titles on Left, Cards on Right) */
 .transit-section {
   flex: 1;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
+  align-items: center;
+  gap: 2rem;
   height: 100%;
 }
 
-.transit-header {
+.transit-meta {
+  flex: 0 0 180px;
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 0.5rem;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
-.transit-header h2 {
-  font-size: 1.25rem;
+.transit-meta h2 {
+  font-size: 1.15rem;
   color: var(--text-muted);
   letter-spacing: 1px;
   text-transform: uppercase;
 }
 
 .stop-name {
-  font-size: 1.15rem;
+  font-size: 1.3rem;
   color: var(--accent-color);
   font-weight: 600;
 }
 
 .transit-list {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-/* Bus Departure Cards directly on background */
+/* Bus Departure Cards */
 .transit-item {
   display: flex;
   align-items: center;
