@@ -64,11 +64,11 @@ body {
   text-transform: capitalize;
 }
 
-/* Transit Section: Side-by-side (Titles on Left, Cards on Right) */
+/* Transit Section: Titles Top-Aligned on Left, Cards on Right */
 .transit-section {
   flex: 1;
   display: flex;
-  align-items: center;
+  align-items: flex-start; /* Changed from center to top-align with the first card */
   gap: 2rem;
   height: 100%;
 }
@@ -78,6 +78,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  padding-top: 0.5rem; /* Matches the top padding of the departure card */
 }
 
 .transit-meta h2 {

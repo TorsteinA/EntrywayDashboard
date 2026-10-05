@@ -60,14 +60,15 @@ app.get("/api/weather/custom", async (req, res) => {
   }
 });
 
-// Proxy for Entur GraphQL API (Fetch 2 departures for the specific stop)
+// Proxy endpoint for Entur / Ruter GraphQL API
 app.post("/api/transit", async (req, res) => {
   try {
+    // You can pass either a StopPlace ID (NSR:StopPlace:...) or a Quay ID (NSR:Quay:...)
     const query = `
       query GetDepartures($id: String!) {
         stopPlace(id: $id) {
           name
-          estimatedCalls(numberOfDepartures: 2, timeRange: 7200) {
+          estimatedCalls(numberOfDepartures: 10, timeRange: 7200) {
             realtime
             aimedDepartureTime
             expectedDepartureTime
@@ -105,14 +106,14 @@ app.post("/api/transit", async (req, res) => {
     if (!response.ok) {
       return res
         .status(response.status)
-        .json({ error: "Kunne ikke hente kollektivdata" });
+        .json({ error: "Failed to fetch transit data" });
     }
 
     const data = await response.json();
     res.json(data);
   } catch (err) {
     console.error("Transit Proxy Error:", err);
-    res.status(500).json({ error: "Intern tjenerfeil" });
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 

@@ -5,6 +5,9 @@ const favoriteLocations = [
   { name: "Asker", lat: 59.8338, lon: 10.4354 },
 ];
 
+const TARGET_DESTINATION = "Blystadlia";
+
+// Map MET Norway symbol codes to Norwegian display labels
 const weatherTranslations = {
   clearsky: "Sol",
   fair: "Lettskyet",
@@ -20,12 +23,15 @@ const weatherTranslations = {
 
 function translateSymbol(code) {
   if (!code) return "";
-  const clean = code.replace(/_(night|day|polarnight)/g, "").toLowerCase();
-  return weatherTranslations[clean] || clean.replace(/_/g, " ");
+  const cleanCode = code.replace(/_(night|day|polarnight)/g, "").toLowerCase();
+  return weatherTranslations[cleanCode] || cleanCode.replace(/_/g, " ");
 }
 
+// Calculate perceived temperature ("Føles som")
 function calculateFeelsLike(tempC, windSpeedMs, humidityPct) {
   const windKmH = windSpeedMs * 3.6;
+
+  // Cold weather wind chill formula
   if (tempC <= 10 && windKmH > 4.8) {
     return Math.round(
       13.12 +
@@ -34,15 +40,17 @@ function calculateFeelsLike(tempC, windSpeedMs, humidityPct) {
         0.3965 * tempC * Math.pow(windKmH, 0.16),
     );
   }
+  // Warm weather apparent temperature formula
   if (tempC >= 20) {
     const e =
       (humidityPct / 100) * 6.105 * Math.exp((17.27 * tempC) / (237.7 + tempC));
     return Math.round(tempC + 0.33 * e - 0.7 * windSpeedMs - 4.0);
   }
+
   return Math.round(tempC);
 }
 
-// Clock & Date updates
+// Update clock and Norwegian formatted date
 function updateClock() {
   const now = new Date();
   document.getElementById("time").textContent = now.toLocaleTimeString(
@@ -55,7 +63,7 @@ function updateClock() {
   );
 }
 
-// Home Weather
+// Fetch primary weather data for home location
 async function fetchHomeWeather() {
   try {
     const res = await fetch("/api/weather");
@@ -81,7 +89,7 @@ async function fetchHomeWeather() {
     document.getElementById("humidity").textContent = `${humidity}%`;
     document.getElementById("wind-speed").textContent = `${windSpeed} m/s`;
 
-    // High / Low calculation
+    // Calculate high/low for today
     let high = -Infinity,
       low = Infinity;
     timeseries.slice(0, 24).forEach((ts) => {
@@ -92,7 +100,7 @@ async function fetchHomeWeather() {
     document.getElementById("high-temp").textContent = `${Math.round(high)}°`;
     document.getElementById("low-temp").textContent = `${Math.round(low)}°`;
 
-    // 3-hour forecast
+    // Render 3-hour forecast
     const forecastContainer = document.getElementById("forecast-3h");
     forecastContainer.innerHTML = "";
     for (let i = 1; i <= 3; i++) {
@@ -116,7 +124,7 @@ async function fetchHomeWeather() {
   }
 }
 
-// Favorite Places Stack
+// Fetch weather cards for secondary favorite locations
 async function fetchFavoriteWeather() {
   const container = document.getElementById("favorites-list");
   container.innerHTML = "";
@@ -158,17 +166,27 @@ async function fetchFavoriteWeather() {
   }
 }
 
-// Transit (Next 2 Departures)
+// Fetch public transit departures
 async function fetchTransit() {
   try {
     const res = await fetch("/api/transit", { method: "POST" });
     if (!res.ok) return;
     const data = await res.json();
     const stopPlace = data.data?.stopPlace;
-    const calls = stopPlace?.estimatedCalls || [];
+    let calls = stopPlace?.estimatedCalls || [];
 
-    if (stopPlace?.name)
+    if (stopPlace?.name) {
       document.getElementById("stop-name").textContent = stopPlace.name;
+    }
+
+    // Filter by destination if TARGET_DESTINATION is defined
+    if (TARGET_DESTINATION) {
+      calls = calls.filter((call) =>
+        call.destinationDisplay?.frontText
+          ?.toLowerCase()
+          .includes(TARGET_DESTINATION.toLowerCase()),
+      );
+    }
 
     const listContainer = document.getElementById("transit-list");
     listContainer.innerHTML = "";
@@ -179,6 +197,7 @@ async function fetchTransit() {
       return;
     }
 
+    // Always display top 2 matching departures
     calls.slice(0, 2).forEach((call) => {
       const lineCode = call.serviceJourney.journeyPattern.line.publicCode || "";
       const destination = call.destinationDisplay?.frontText || "Ukjent";
@@ -204,7 +223,7 @@ async function fetchTransit() {
   }
 }
 
-// Initializing
+// Initialize application
 updateClock();
 setInterval(updateClock, 1000);
 
@@ -212,7 +231,7 @@ fetchHomeWeather();
 fetchFavoriteWeather();
 fetchTransit();
 
-// Intervals
+// Set refresh intervals
 setInterval(fetchTransit, 30 * 1000);
 setInterval(fetchHomeWeather, 12 * 60 * 1000);
 setInterval(fetchFavoriteWeather, 15 * 60 * 1000);
