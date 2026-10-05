@@ -5,10 +5,10 @@ const favoriteLocations = [
   { name: "Asker", lat: 59.8338, lon: 10.4354 },
 ];
 
-// Destination to filter OUT (incoming buses)
+// Destination to exclude (incoming buses)
 const EXCLUDE_DESTINATION = "Vardefjellet";
 
-// Map MET Norway symbol codes to Norwegian display labels
+// Map MET Norway symbol codes to Norwegian labels
 const weatherTranslations = {
   clearsky: "Sol",
   fair: "Lettskyet",
@@ -121,7 +121,7 @@ async function fetchHomeWeather() {
   }
 }
 
-// Fetch travel weather for favorite locations (+2h forecast & today's range)
+// Fetch travel weather for favorite locations (+1-2h forecast & rainfall amount)
 async function fetchFavoriteWeather() {
   const container = document.getElementById("favorites-list");
   container.innerHTML = "";
@@ -136,8 +136,8 @@ async function fetchFavoriteWeather() {
       const timeseries = data.properties.timeseries;
       if (!timeseries?.length) continue;
 
-      // Arrival forecast (~2 hours ahead)
-      const arrivalData = timeseries[2] || timeseries[0];
+      // Check forecast ~1 hour in the future (arrival time)
+      const arrivalData = timeseries[1] || timeseries[0];
       const arrivalTemp = Math.round(
         arrivalData.data.instant.details.air_temperature,
       );
@@ -145,10 +145,11 @@ async function fetchFavoriteWeather() {
         arrivalData.data.next_1_hours?.summary?.symbol_code ||
         arrivalData.data.next_6_hours?.summary?.symbol_code;
 
-      const prob =
-        arrivalData.data.next_1_hours?.details?.probability_of_precipitation;
+      // Expected precipitation amount (mm) for the arrival hour
+      const precipAmount =
+        arrivalData.data.next_1_hours?.details?.precipitation_amount || 0;
       const precipText =
-        prob !== undefined ? `${Math.round(prob)}% regn` : "0% regn";
+        precipAmount > 0 ? `${precipAmount.toFixed(1)} mm regn` : "0 mm regn";
 
       // Calculate today's High / Low for packing advice
       let high = -Infinity,
@@ -169,7 +170,7 @@ async function fetchFavoriteWeather() {
       item.innerHTML = `
         <div class="fav-left">
           <span class="fav-name">${loc.name}</span>
-          <span class="fav-arrival-info">Kl. ${arrivalTime}: ${translateSymbol(symbolCode)}</span>
+          <span class="fav-arrival-info">Kl. ${arrivalTime} • ${translateSymbol(symbolCode)}</span>
         </div>
         <div class="fav-right">
           <span class="fav-temp">${arrivalTemp}°</span>
@@ -196,7 +197,7 @@ async function fetchTransit() {
     if (stopPlace?.name)
       document.getElementById("stop-name").textContent = stopPlace.name;
 
-    // Invert check: Filter out incoming buses heading to Vardefjellet
+    // Filter out incoming buses heading to Vardefjellet
     if (EXCLUDE_DESTINATION) {
       calls = calls.filter((call) => {
         const dest = call.destinationDisplay?.frontText || "";
@@ -239,7 +240,7 @@ async function fetchTransit() {
   }
 }
 
-// Initializing
+// Initialize application
 updateClock();
 setInterval(updateClock, 1000);
 
@@ -247,7 +248,7 @@ fetchHomeWeather();
 fetchFavoriteWeather();
 fetchTransit();
 
-// Intervals
+// Set refresh intervals
 setInterval(fetchTransit, 30 * 1000);
 setInterval(fetchHomeWeather, 12 * 60 * 1000);
 setInterval(fetchFavoriteWeather, 15 * 60 * 1000);

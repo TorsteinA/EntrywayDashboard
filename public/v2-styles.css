@@ -34,7 +34,7 @@ body {
 }
 
 /* ==========================================================================
-   TOP ROW (~25% height) - Directly on background
+   TOP ROW (~25% height)
    ========================================================================== */
 .top-row {
   display: flex;
@@ -43,7 +43,6 @@ body {
   align-items: center;
 }
 
-/* Clock & Date */
 .clock-section {
   flex: 0 0 28%;
   display: flex;
@@ -65,7 +64,6 @@ body {
   text-transform: capitalize;
 }
 
-/* Transit Section: Titles Top-Aligned on Left, Cards on Right */
 .transit-section {
   flex: 1;
   display: flex;
@@ -75,7 +73,7 @@ body {
 }
 
 .transit-meta {
-  flex: 0 0 190px;
+  flex: 0 0 210px;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
@@ -83,7 +81,7 @@ body {
 }
 
 .transit-meta h2 {
-  font-size: 1.15rem;
+  font-size: 1.1rem;
   color: var(--text-muted);
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -102,7 +100,6 @@ body {
   gap: 0.5rem;
 }
 
-/* Bus Departure Cards */
 .transit-item {
   display: flex;
   align-items: center;
@@ -148,7 +145,7 @@ body {
 }
 
 /* ==========================================================================
-   BOTTOM ROW (~75% height) - Large Combined Card
+   BOTTOM ROW (~75% height)
    ========================================================================== */
 .bottom-row {
   flex: 1;
@@ -174,7 +171,7 @@ body {
   margin-bottom: 1rem;
 }
 
-/* Left Section: Home Weather (~63%) */
+/* Home Weather Section */
 .home-weather-section {
   flex: 0 0 63%;
   display: flex;
@@ -262,7 +259,7 @@ body {
   margin-top: 0.2rem;
 }
 
-/* Card Separator Divider */
+/* Divider */
 .card-divider {
   width: 1px;
   background-color: var(--border-color);
@@ -270,7 +267,7 @@ body {
   align-self: stretch;
 }
 
-/* Right Section: Favorite Places (~37%) */
+/* Favorite Places Section */
 .favorites-section {
   flex: 1;
   display: flex;
@@ -285,7 +282,6 @@ body {
   flex: 1;
 }
 
-/* Favorite Destination Cards */
 .fav-card-item {
   background: var(--card-sub-bg);
   border: 1px solid var(--border-color);
