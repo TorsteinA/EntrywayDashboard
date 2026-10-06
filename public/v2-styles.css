@@ -102,6 +102,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  height: 100%;
+  justify-content: center;
 }
 
 .transit-item {
