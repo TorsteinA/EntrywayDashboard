@@ -354,7 +354,6 @@ body {
   color: var(--text-muted);
   margin-top: 0.15rem;
 }
-
 .fav-col-right {
   display: flex;
   flex-direction: column;
@@ -371,6 +370,12 @@ body {
   font-size: 0.85rem;
   color: var(--accent-color);
   margin-top: 0.15rem;
+}
+
+.fav-precip-prob {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 0.1rem;
 }
 
 .loading {

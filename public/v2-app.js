@@ -226,6 +226,7 @@ async function fetchFavoriteWeather() {
       // Select timeseries entry closest to calculated arrival time
       const travelMins = loc.travelTimeMins || 60;
       const arrivalData = getClosestTimeseries(timeseries, travelMins);
+      const arrivalIndex = timeseries.indexOf(arrivalData);
 
       const arrivalTemp = Math.round(
         arrivalData.data.instant.details.air_temperature,
@@ -234,6 +235,7 @@ async function fetchFavoriteWeather() {
         arrivalData.data.next_1_hours?.summary?.symbol_code ||
         arrivalData.data.next_6_hours?.summary?.symbol_code;
 
+      // Expected arrival hour precipitation amount (mm)
       const pMin =
         arrivalData.data.next_1_hours?.details?.precipitation_amount_min ||
         arrivalData.data.next_1_hours?.details?.precipitation_amount ||
@@ -243,6 +245,19 @@ async function fetchFavoriteWeather() {
         arrivalData.data.next_1_hours?.details?.precipitation_amount ||
         pMin;
       const precipText = formatPrecipRange(pMin, pMax);
+
+      // Calculate max rain probability over the next 6 hours after arrival
+      let maxRainProb6h = 0;
+      const arrivalWindow = timeseries.slice(arrivalIndex, arrivalIndex + 6);
+      arrivalWindow.forEach((entry) => {
+        const prob1h =
+          entry.data.next_1_hours?.details?.probability_of_precipitation;
+        const prob6h =
+          entry.data.next_6_hours?.details?.probability_of_precipitation;
+        const prob =
+          prob1h !== undefined ? prob1h : prob6h !== undefined ? prob6h : 0;
+        if (prob > maxRainProb6h) maxRainProb6h = prob;
+      });
 
       // Calculate today's High / Low
       let high = -Infinity,
@@ -272,6 +287,7 @@ async function fetchFavoriteWeather() {
         <div class="fav-col-right">
           <span class="fav-cond">${translateSymbol(symbolCode)}</span>
           <span class="fav-precip">${precipText}</span>
+          <span class="fav-precip-prob">Regn 6t: ${Math.round(maxRainProb6h)}%</span>
         </div>
       `;
       container.appendChild(item);
