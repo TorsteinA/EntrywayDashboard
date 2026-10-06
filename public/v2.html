@@ -49,22 +49,28 @@
               </div>
             </div>
 
-            <!-- Rain & Humidity / Wind metrics -->
+            <!-- Reordered 6-Item Metrics Grid -->
             <div class="metrics-grid">
+              <!-- Left Column -->
+              <div class="metric-item">
+                Vind: <strong id="wind-speed">-- m/s</strong>
+              </div>
               <div class="metric-item">
                 Fuktighet: <strong id="humidity">--%</strong>
               </div>
               <div class="metric-item">
-                Vind: <strong id="wind-speed">-- m/s</strong>
+                Skydekke: <strong id="cloud-cover">--%</strong>
               </div>
+
+              <!-- Right Column -->
               <div class="metric-item">
                 Regnsjanse i dag: <strong id="rain-prob-today">--%</strong>
               </div>
               <div class="metric-item">
                 Nedbør i dag: <strong id="rain-amount-today">-- mm</strong>
               </div>
-              <div class="metric-item metric-full">
-                Neste 60 min: <strong id="rain-next-hour">-- mm</strong>
+              <div class="metric-item">
+                Nedbør neste t: <strong id="rain-next-hour">-- mm</strong>
               </div>
             </div>
 
@@ -80,10 +86,10 @@
           <!-- Vertical Divider -->
           <div class="card-divider"></div>
 
-          <!-- Bottom Right: Favorite Places (~44% width - No Header Title) -->
+          <!-- Bottom Right: Favorite Places (~44% width) -->
           <div class="favorites-section">
             <div id="favorites-list" class="favorites-list">
-              <!-- Rendered via JS as slim horizontal cards (Up to 5) -->
+              <!-- Rendered via JS -->
             </div>
           </div>
         </section>

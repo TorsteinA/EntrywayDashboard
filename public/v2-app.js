@@ -84,6 +84,7 @@ async function fetchHomeWeather() {
     const currentTemp = Math.round(currentInstant.air_temperature);
     const humidity = Math.round(currentInstant.relative_humidity || 0);
     const windSpeed = Math.round(currentInstant.wind_speed || 0);
+    const cloudCover = Math.round(currentInstant.cloud_area_fraction || 0);
     const feelsLike = calculateFeelsLike(currentTemp, windSpeed, humidity);
 
     const symbolCode =
@@ -94,8 +95,11 @@ async function fetchHomeWeather() {
     document.getElementById("condition-text").textContent =
       translateSymbol(symbolCode);
     document.getElementById("feels-like-temp").textContent = `${feelsLike}°`;
-    document.getElementById("humidity").textContent = `${humidity}%`;
+
+    // Left column metrics
     document.getElementById("wind-speed").textContent = `${windSpeed} m/s`;
+    document.getElementById("humidity").textContent = `${humidity}%`;
+    document.getElementById("cloud-cover").textContent = `${cloudCover}%`;
 
     // Today's High/Low & Rain totals
     let high = -Infinity,
@@ -138,6 +142,8 @@ async function fetchHomeWeather() {
 
     document.getElementById("high-temp").textContent = `${Math.round(high)}°`;
     document.getElementById("low-temp").textContent = `${Math.round(low)}°`;
+
+    // Right column metrics
     document.getElementById("rain-prob-today").textContent =
       `${Math.round(maxRainProb)}%`;
     document.getElementById("rain-amount-today").textContent =

@@ -209,10 +209,12 @@ body {
   color: var(--text-main);
 }
 
-/* Metrics Grid for Rain & Environment */
+/* Reordered Metrics Grid (3 rows x 2 columns) */
 .metrics-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  grid-template-rows: repeat(3, auto);
+  grid-auto-flow: column; /* Fills down first, then right column */
   gap: 0.4rem 1.5rem;
   font-size: 1.05rem;
   color: var(--text-muted);
@@ -224,10 +226,6 @@ body {
 
 .metrics-grid strong {
   color: var(--text-main);
-}
-
-.metric-full {
-  grid-column: span 2;
 }
 
 /* 3-Hour Forecast Row */
@@ -289,7 +287,7 @@ body {
   align-self: stretch;
 }
 
-/* Favorite Places Section (~44% width - No Title Header) */
+/* Favorite Places Section */
 .favorites-section {
   flex: 1;
   display: flex;
@@ -305,7 +303,6 @@ body {
   height: 100%;
 }
 
-/* Slim Horizontal Cards for 5 Destinations */
 .fav-card-item {
   background: var(--card-sub-bg);
   border: 1px solid var(--border-color);
