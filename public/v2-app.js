@@ -1,8 +1,10 @@
-// Configure favorite locations here
+// Configure up to 5 favorite locations here
 const favoriteLocations = [
   { name: "Helsfyr", lat: 59.9139, lon: 10.8031 },
   { name: "Kongsvinger", lat: 60.1905, lon: 12.0034 },
   { name: "Asker", lat: 59.8338, lon: 10.4354 },
+  { name: "Trysil", lat: 61.3158, lon: 12.2647 },
+  { name: "Gardermoen", lat: 60.1975, lon: 11.1004 },
 ];
 
 // Destination to exclude (incoming buses)
@@ -47,6 +49,15 @@ function calculateFeelsLike(tempC, windSpeedMs, humidityPct) {
   return Math.round(tempC);
 }
 
+// Format precipitation range (min-max mm)
+function formatPrecipRange(minVal, maxVal) {
+  if (minVal === undefined && maxVal === undefined) return "0 mm";
+  const min = minVal || 0;
+  const max = maxVal !== undefined ? maxVal : min;
+  if (min === max) return `${min.toFixed(1)} mm`;
+  return `${min.toFixed(1)} - ${max.toFixed(1)} mm`;
+}
+
 // Update clock and date
 function updateClock() {
   const now = new Date();
@@ -86,34 +97,86 @@ async function fetchHomeWeather() {
     document.getElementById("humidity").textContent = `${humidity}%`;
     document.getElementById("wind-speed").textContent = `${windSpeed} m/s`;
 
-    // High / Low for today
+    // Today's High/Low & Rain totals
     let high = -Infinity,
       low = Infinity;
-    timeseries.slice(0, 24).forEach((ts) => {
+    let maxRainProb = 0;
+    let minRainTotal = 0;
+    let maxRainTotal = 0;
+
+    const todaySeries = timeseries.slice(0, 24);
+    todaySeries.forEach((ts) => {
       const t = ts.data.instant.details.air_temperature;
       if (t > high) high = t;
       if (t < low) low = t;
+
+      const prob = ts.data.next_1_hours?.details?.probability_of_precipitation;
+      if (prob !== undefined && prob > maxRainProb) maxRainProb = prob;
+
+      const pMin =
+        ts.data.next_1_hours?.details?.precipitation_amount_min ||
+        ts.data.next_1_hours?.details?.precipitation_amount ||
+        0;
+      const pMax =
+        ts.data.next_1_hours?.details?.precipitation_amount_max ||
+        ts.data.next_1_hours?.details?.precipitation_amount ||
+        pMin;
+      minRainTotal += pMin;
+      maxRainTotal += pMax;
     });
+
+    // Next 60 minutes rain
+    const nextHourDetails = timeseries[0].data.next_1_hours?.details;
+    const nextHourMin =
+      nextHourDetails?.precipitation_amount_min ||
+      nextHourDetails?.precipitation_amount ||
+      0;
+    const nextHourMax =
+      nextHourDetails?.precipitation_amount_max ||
+      nextHourDetails?.precipitation_amount ||
+      nextHourMin;
+
     document.getElementById("high-temp").textContent = `${Math.round(high)}°`;
     document.getElementById("low-temp").textContent = `${Math.round(low)}°`;
+    document.getElementById("rain-prob-today").textContent =
+      `${Math.round(maxRainProb)}%`;
+    document.getElementById("rain-amount-today").textContent =
+      formatPrecipRange(minRainTotal, maxRainTotal);
+    document.getElementById("rain-next-hour").textContent = formatPrecipRange(
+      nextHourMin,
+      nextHourMax,
+    );
 
-    // 3-hour forecast
+    // Render 3-hour forecast with condition text & rain
     const forecastContainer = document.getElementById("forecast-3h");
     forecastContainer.innerHTML = "";
     for (let i = 1; i <= 3; i++) {
       if (!timeseries[i]) break;
-      const time = new Date(timeseries[i].time).toLocaleTimeString("no-NO", {
+      const entry = timeseries[i];
+      const time = new Date(entry.time).toLocaleTimeString("no-NO", {
         hour: "2-digit",
         minute: "2-digit",
       });
-      const temp = Math.round(
-        timeseries[i].data.instant.details.air_temperature,
-      );
+      const temp = Math.round(entry.data.instant.details.air_temperature);
+      const condCode =
+        entry.data.next_1_hours?.summary?.symbol_code ||
+        entry.data.next_6_hours?.summary?.symbol_code;
+
+      const pMin =
+        entry.data.next_1_hours?.details?.precipitation_amount_min ||
+        entry.data.next_1_hours?.details?.precipitation_amount ||
+        0;
+      const pMax =
+        entry.data.next_1_hours?.details?.precipitation_amount_max ||
+        entry.data.next_1_hours?.details?.precipitation_amount ||
+        pMin;
 
       forecastContainer.innerHTML += `
         <div class="forecast-item">
-          <div class="f-time">${time}</div>
-          <div class="f-temp">${temp}°</div>
+          <span class="f-time">${time}</span>
+          <span class="f-cond">${translateSymbol(condCode)}</span>
+          <span class="f-temp">${temp}°</span>
+          <span class="f-rain">${formatPrecipRange(pMin, pMax)}</span>
         </div>`;
     }
   } catch (err) {
@@ -121,12 +184,12 @@ async function fetchHomeWeather() {
   }
 }
 
-// Fetch travel weather for favorite locations (+1-2h forecast & rainfall amount)
+// Fetch travel weather for up to 5 favorite locations
 async function fetchFavoriteWeather() {
   const container = document.getElementById("favorites-list");
   container.innerHTML = "";
 
-  for (const loc of favoriteLocations) {
+  for (const loc of favoriteLocations.slice(0, 5)) {
     try {
       const res = await fetch(
         `/api/weather/custom?lat=${loc.lat}&lon=${loc.lon}`,
@@ -145,13 +208,17 @@ async function fetchFavoriteWeather() {
         arrivalData.data.next_1_hours?.summary?.symbol_code ||
         arrivalData.data.next_6_hours?.summary?.symbol_code;
 
-      // Expected precipitation amount (mm) for the arrival hour
-      const precipAmount =
-        arrivalData.data.next_1_hours?.details?.precipitation_amount || 0;
-      const precipText =
-        precipAmount > 0 ? `${precipAmount.toFixed(1)} mm regn` : "0 mm regn";
+      const pMin =
+        arrivalData.data.next_1_hours?.details?.precipitation_amount_min ||
+        arrivalData.data.next_1_hours?.details?.precipitation_amount ||
+        0;
+      const pMax =
+        arrivalData.data.next_1_hours?.details?.precipitation_amount_max ||
+        arrivalData.data.next_1_hours?.details?.precipitation_amount ||
+        pMin;
+      const precipText = formatPrecipRange(pMin, pMax);
 
-      // Calculate today's High / Low for packing advice
+      // Calculate today's High / Low
       let high = -Infinity,
         low = Infinity;
       timeseries.slice(0, 24).forEach((ts) => {
@@ -168,13 +235,16 @@ async function fetchFavoriteWeather() {
       const item = document.createElement("div");
       item.className = "fav-card-item";
       item.innerHTML = `
-        <div class="fav-left">
+        <div class="fav-col-left">
           <span class="fav-name">${loc.name}</span>
-          <span class="fav-arrival-info">Kl. ${arrivalTime} • ${translateSymbol(symbolCode)}</span>
+          <span class="fav-time">Kl. ${arrivalTime}</span>
         </div>
-        <div class="fav-right">
+        <div class="fav-col-mid">
           <span class="fav-temp">${arrivalTemp}°</span>
-          <span class="fav-range">Dag: ${Math.round(high)}° / ${Math.round(low)}°</span>
+          <span class="fav-range">${Math.round(high)}° / ${Math.round(low)}°</span>
+        </div>
+        <div class="fav-col-right">
+          <span class="fav-cond">${translateSymbol(symbolCode)}</span>
           <span class="fav-precip">${precipText}</span>
         </div>
       `;
@@ -185,7 +255,7 @@ async function fetchFavoriteWeather() {
   }
 }
 
-// Fetch public transit departures (skipping incoming buses)
+// Fetch public transit departures
 async function fetchTransit() {
   try {
     const res = await fetch("/api/transit", { method: "POST" });
