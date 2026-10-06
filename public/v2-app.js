@@ -1,12 +1,11 @@
 // Configure up to 5 favorite locations here
 const favoriteLocations = [
-  { name: "Helsfyr", lat: 59.9139, lon: 10.8031 },
-  { name: "Kongsvinger", lat: 60.1905, lon: 12.0034 },
-  { name: "Asker", lat: 59.8338, lon: 10.4354 },
-  { name: "Trysil", lat: 61.3158, lon: 12.2647 },
-  { name: "Gardermoen", lat: 60.1975, lon: 11.1004 },
+  { name: "Kongsvinger", lat: 60.1905, lon: 12.0034, travelTimeMins: 70 },
+  { name: "Skarnes", lat: 60.26884, lon: 11.68211, travelTimeMins: 40 },
+  { name: "Helsfyr", lat: 59.9139, lon: 10.8031, travelTimeMins: 25 },
+  { name: "Bygdøy", lat: 59.91356, lon: 10.68312, travelTimeMins: 30 },
+  { name: "Asker", lat: 59.8338, lon: 10.4354, travelTimeMins: 60 },
 ];
-
 // Destination to exclude (incoming buses)
 const EXCLUDE_DESTINATION = "Vardefjellet";
 
@@ -56,6 +55,25 @@ function formatPrecipRange(minVal, maxVal) {
   const max = maxVal !== undefined ? maxVal : min;
   if (min === max) return `${min.toFixed(1)} mm`;
   return `${min.toFixed(1)} - ${max.toFixed(1)} mm`;
+}
+
+// Helper: Find timeseries entry closest to target arrival time
+function getClosestTimeseries(timeseries, travelTimeMins = 60) {
+  const targetTime = new Date(Date.now() + travelTimeMins * 60 * 1000);
+  let closestEntry = timeseries[0];
+  let smallestDiff = Infinity;
+
+  for (const entry of timeseries.slice(0, 12)) {
+    const entryTime = new Date(entry.time);
+    const diff = Math.abs(entryTime - targetTime);
+
+    if (diff < smallestDiff) {
+      smallestDiff = diff;
+      closestEntry = entry;
+    }
+  }
+
+  return closestEntry;
 }
 
 // Update clock and date
@@ -190,7 +208,7 @@ async function fetchHomeWeather() {
   }
 }
 
-// Fetch travel weather for up to 5 favorite locations
+// Fetch travel weather dynamically based on travelTimeMins
 async function fetchFavoriteWeather() {
   const container = document.getElementById("favorites-list");
   container.innerHTML = "";
@@ -205,8 +223,10 @@ async function fetchFavoriteWeather() {
       const timeseries = data.properties.timeseries;
       if (!timeseries?.length) continue;
 
-      // Check forecast ~1 hour in the future (arrival time)
-      const arrivalData = timeseries[1] || timeseries[0];
+      // Select timeseries entry closest to calculated arrival time
+      const travelMins = loc.travelTimeMins || 60;
+      const arrivalData = getClosestTimeseries(timeseries, travelMins);
+
       const arrivalTemp = Math.round(
         arrivalData.data.instant.details.air_temperature,
       );
