@@ -3,54 +3,91 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Entré-dashboard</title>
+    <title>Entré Dashbord</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <div class="dashboard-container">
-      <header class="header">
-        <div class="clock-display">
+      <!-- TOP ROW (25% Height) -->
+      <header class="top-row">
+        <!-- Top Left -->
+        <div class="clock-section">
           <div id="time" class="time">--:--</div>
           <div id="date" class="date">Laster dato...</div>
         </div>
-        <div id="weather-summary-header" class="weather-summary-header">
-          <span id="header-temp">--°C</span>
-          <span id="header-condition">--</span>
-        </div>
-      </header>
 
-      <main class="content-grid">
-        <section class="card weather-card">
-          <h2>Værvarsel</h2>
-          <div class="current-weather">
-            <div class="main-temp" id="current-temp">--°</div>
-            <div class="details">
-              <div id="condition-text" class="condition">Laster...</div>
-              <div class="high-low">
-                <span
-                  >Føles som: <strong id="feels-like-temp">--°</strong></span
-                >
-              </div>
-              <div class="high-low">
-                <span>Maks: <strong id="high-temp">--°</strong></span>
-                <span>Min: <strong id="low-temp">--°</strong></span>
-              </div>
-            </div>
-          </div>
-
-          <h3>Neste 3 timer</h3>
-          <div class="forecast-3h" id="forecast-3h">
-            <div class="loading">Henter værvarsel...</div>
-          </div>
-        </section>
-
-        <section class="card transit-card">
-          <div class="card-header">
-            <h2>Neste avganger</h2>
+        <!-- Top Right -->
+        <div class="transit-section">
+          <div class="transit-meta">
+            <h2>NESTE UTGÅENDE AVGANGER</h2>
             <span id="stop-name" class="stop-name">Busstopp</span>
           </div>
           <div id="transit-list" class="transit-list">
             <div class="loading">Laster avganger...</div>
+          </div>
+        </div>
+      </header>
+
+      <!-- BOTTOM ROW (75% Height) -->
+      <main class="bottom-row">
+        <section class="card combined-card">
+          <!-- Bottom Left: Home Weather (~54% width) -->
+          <div class="home-weather-section">
+            <div class="card-title">VÆRET HJEMME</div>
+
+            <div class="current-weather">
+              <div class="main-temp" id="current-temp">--°</div>
+              <div class="weather-details">
+                <div id="condition-text" class="condition">Laster...</div>
+                <div class="sub-detail">
+                  Føles som: <strong id="feels-like-temp">--°</strong>
+                </div>
+                <div class="sub-detail">
+                  Maks / Min: <strong id="high-temp">--°</strong> /
+                  <strong id="low-temp">--°</strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- Reordered 6-Item Metrics Grid -->
+            <div class="metrics-grid">
+              <!-- Left Column -->
+              <div class="metric-item">
+                Vind: <strong id="wind-speed">-- m/s</strong>
+              </div>
+              <div class="metric-item">
+                Fuktighet: <strong id="humidity">--%</strong>
+              </div>
+              <div class="metric-item">
+                Skydekke: <strong id="cloud-cover">--%</strong>
+              </div>
+
+              <!-- Right Column -->
+              <div class="metric-item">
+                Regnsjanse i dag: <strong id="rain-prob-today">--%</strong>
+              </div>
+              <div class="metric-item">
+                Nedbør i dag: <strong id="rain-amount-today">-- mm</strong>
+              </div>
+              <div class="metric-item">
+                Nedbør neste t: <strong id="rain-next-hour">-- mm</strong>
+              </div>
+            </div>
+
+            <!-- Compact 3-Hour Forecast -->
+            <div class="forecast-section">
+              <h3>Neste 3 timer</h3>
+              <div id="forecast-3h" class="forecast-3h">
+                <!-- Rendered via JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Right: Favorite Places (~44% width) -->
+          <div class="favorites-section">
+            <div id="favorites-list" class="favorites-list">
+              <!-- Rendered via JS -->
+            </div>
           </div>
         </section>
       </main>
