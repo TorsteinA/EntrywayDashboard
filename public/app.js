@@ -378,7 +378,7 @@ function sToMs(s) {
 }
 
 function minToMs(m) {
-  m * 60 * 1000;
+  return m * 60 * 1000;
 }
 
 // Initialize application
