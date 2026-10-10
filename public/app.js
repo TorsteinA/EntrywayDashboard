@@ -19,6 +19,7 @@ const weatherTranslations = {
   rain: "Regn",
   heavyrain: "Kraftig regn",
   sleet: "Sludd",
+  heavysleet: "Kraftig Sludd",
   snow: "Snø",
   fog: "Tåke",
 };
