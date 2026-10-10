@@ -91,16 +91,19 @@ function updateClock() {
 }
 
 // Update the last refreshed timestamp
-function updateLastRefreshed() {
+function updateLastRefreshed(elementId) {
   const now = new Date();
-  document.getElementById("last-refreshed").textContent =
-    "Oppdatert: " +
-    now.toLocaleTimeString("no-NO", {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: false,
-    });
+  const el = document.getElementById(elementId);
+  if (el) {
+    el.textContent =
+      "Oppdatert: " +
+      now.toLocaleTimeString("no-NO", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+      });
+  }
 }
 
 // Fetch primary weather data for home location
@@ -217,7 +220,7 @@ async function fetchHomeWeather() {
           <span class="f-rain">${formatPrecipRange(pMin, pMax)}</span>
         </div>`;
 
-      updateLastRefreshed();
+      updateLastRefreshed("weather-last-refreshed");
     }
   } catch (err) {
     console.error("Error fetching home weather:", err);
@@ -364,7 +367,7 @@ async function fetchTransit() {
         </div>`;
     });
 
-    updateLastRefreshed();
+    updateLastRefreshed("transit-last-refreshed");
   } catch (err) {
     console.error("Transit error:", err);
   }
