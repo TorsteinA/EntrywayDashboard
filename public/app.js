@@ -90,6 +90,19 @@ function updateClock() {
   );
 }
 
+// Update the last refreshed timestamp
+function updateLastRefreshed() {
+  const now = new Date();
+  document.getElementById("last-refreshed").textContent =
+    "Oppdatert: " +
+    now.toLocaleTimeString("no-NO", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
+}
+
 // Fetch primary weather data for home location
 async function fetchHomeWeather() {
   try {
@@ -203,6 +216,8 @@ async function fetchHomeWeather() {
           <span class="f-temp">${temp}°</span>
           <span class="f-rain">${formatPrecipRange(pMin, pMax)}</span>
         </div>`;
+
+      updateLastRefreshed();
     }
   } catch (err) {
     console.error("Error fetching home weather:", err);
@@ -348,9 +363,19 @@ async function fetchTransit() {
           <span class="time-until ${isDue ? "due" : ""}">${timeText}</span>
         </div>`;
     });
+
+    updateLastRefreshed();
   } catch (err) {
     console.error("Transit error:", err);
   }
+}
+
+function sToMs(s) {
+  return s * 1000;
+}
+
+function minToMs(m) {
+  m * 60 * 1000;
 }
 
 // Initialize application
@@ -362,6 +387,6 @@ fetchFavoriteWeather();
 fetchTransit();
 
 // Set refresh intervals
-setInterval(fetchTransit, 30 * 1000);
-setInterval(fetchHomeWeather, 12 * 60 * 1000);
-setInterval(fetchFavoriteWeather, 15 * 60 * 1000);
+setInterval(fetchTransit, sToMs(30));
+setInterval(fetchHomeWeather, minToMs(12));
+setInterval(fetchFavoriteWeather, minToMs(15));
