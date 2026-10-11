@@ -272,6 +272,7 @@ async function fetchHomeWeather() {
         <div class="forecast-item">
           <span class="f-time">${time}</span>
           <img class="f-icon" src="${getWeatherIconUrl(condCode)}" alt="" />
+          <span class="f-cond">${translateSymbol(condCode)}</span>
           <span class="f-temp">${temp}°</span>
           <span class="f-rain">${formatPrecipRange(pMin, pMax)}</span>
         </div>`;
