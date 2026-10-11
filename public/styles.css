@@ -218,6 +218,28 @@ body {
   margin-bottom: 0.2rem;
 }
 
+/* Main Home Weather Icon */
+.main-weather-icon {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+}
+
+/* Favorite Items Icon */
+.fav-icon {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+/* 3-Hour Forecast Icon */
+.f-icon {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  margin: 0.2rem 0;
+}
+
 .sub-detail {
   font-size: 1.05rem;
   color: var(--text-muted);

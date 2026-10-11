@@ -68,6 +68,12 @@ const weatherTranslations = {
   fog: "Tåke",
 };
 
+// Get SVG icon URL from MET Norway's official GitHub / CDN repo
+function getWeatherIconUrl(symbolCode) {
+  if (!symbolCode) return "";
+  return `https://raw.githubusercontent.com/metno/weathericons/main/weather/svg/${symbolCode}.svg`;
+}
+
 function translateSymbol(code) {
   if (!code) return "";
   const cleanCode = code.replace(/_(night|day|polarnight)/g, "").toLowerCase();
@@ -175,6 +181,12 @@ async function fetchHomeWeather() {
       translateSymbol(symbolCode);
     document.getElementById("feels-like-temp").textContent = `${feelsLike}°`;
 
+    const iconEl = document.getElementById("weather-icon");
+    if (iconEl && symbolCode) {
+      iconEl.src = getWeatherIconUrl(symbolCode);
+      iconEl.alt = translateSymbol(symbolCode);
+    }
+
     // Left column metrics
     document.getElementById("wind-speed").textContent = `${windSpeed} m/s`;
     document.getElementById("humidity").textContent = `${humidity}%`;
@@ -259,7 +271,7 @@ async function fetchHomeWeather() {
       forecastContainer.innerHTML += `
         <div class="forecast-item">
           <span class="f-time">${time}</span>
-          <span class="f-cond">${translateSymbol(condCode)}</span>
+          <img class="f-icon" src="${getWeatherIconUrl(condCode)}" alt="" />
           <span class="f-temp">${temp}°</span>
           <span class="f-rain">${formatPrecipRange(pMin, pMax)}</span>
         </div>`;
@@ -348,6 +360,7 @@ async function fetchFavoriteWeather() {
           <span class="fav-range">${Math.round(high)}° / ${Math.round(low)}°</span>
         </div>
         <div class="fav-col-right">
+          <img class="fav-icon" src="${getWeatherIconUrl(symbolCode)}" alt="${translateSymbol(symbolCode)}" />
           <span class="fav-cond">${translateSymbol(symbolCode)}</span>
           <span class="fav-precip">${precipText}</span>
           <span class="fav-precip-prob">Regn 6t: ${Math.round(maxRainProb6h)}%</span>
