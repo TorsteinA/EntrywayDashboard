@@ -11,16 +11,60 @@ const EXCLUDE_DESTINATION = "Vardefjellet";
 
 // Map MET Norway symbol codes to Norwegian labels
 const weatherTranslations = {
-  clearsky: "Sol",
+  clearsky: "Klarvær",
   fair: "Lettskyet",
   partlycloudy: "Delvis skyet",
   cloudy: "Overskyet",
+
+  // Rain
+  lightrainshowers: "Lette regnbyger",
   rainshowers: "Regnbyger",
+  heavyrainshowers: "Kraftige regnbyger",
+  lightrain: "Lett regn",
   rain: "Regn",
   heavyrain: "Kraftig regn",
+
+  // Sleet
+  lightsleetshowers: "Lette sluddbyger",
+  sleetshowers: "Sluddbyger",
+  heavysleetshowers: "Kraftige sluddbyger",
+  lightsleet: "Lett sludd",
   sleet: "Sludd",
-  heavysleet: "Kraftig Sludd",
+  heavysleet: "Kraftig sludd",
+
+  // Snow
+  lightsnowshowers: "Lette snøbyger",
+  snowshowers: "Snøbyger",
+  heavysnowshowers: "Kraftige snøbyger",
+  lightsnow: "Lett snø",
   snow: "Snø",
+  heavysnow: "Kraftig snø",
+
+  // Thunder variants (Rain)
+  lightrainshowersandthunder: "Lette regnbyger og torden",
+  rainshowersandthunder: "Regnbyger og torden",
+  heavyrainshowersandthunder: "Kraftige regnbyger og torden",
+  lightrainandthunder: "Lett regn og torden",
+  rainandthunder: "Regn og torden",
+  heavyrainandthunder: "Kraftig regn og torden",
+
+  // Thunder variants (Sleet)
+  lightsleetshowersandthunder: "Lette sluddbyger og torden",
+  sleetshowersandthunder: "Sluddbyger og torden",
+  heavysleetshowersandthunder: "Kraftige sluddbyger og torden",
+  lightsleetandthunder: "Lett sludd og torden",
+  sleetandthunder: "Sludd og torden",
+  heavysleetandthunder: "Kraftig sludd og torden",
+
+  // Thunder variants (Snow)
+  lightsnowshowersandthunder: "Lette snøbyger og torden",
+  snowshowersandthunder: "Snøbyger og torden",
+  heavysnowshowersandthunder: "Kraftige snøbyger og torden",
+  lightsnowandthunder: "Lett snø og torden",
+  snowandthunder: "Snø og torden",
+  heavysnowandthunder: "Kraftig snø og torden",
+
+  // Fog
   fog: "Tåke",
 };
 
