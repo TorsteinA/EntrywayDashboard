@@ -227,8 +227,8 @@ body {
 
 /* Favorite Items Icon */
 .fav-icon {
-  width: 32px;
-  height: 32px;
+  width: 22px;
+  height: 22px;
   object-fit: contain;
 }
 
@@ -401,6 +401,12 @@ body {
   font-size: 0.95rem;
   font-weight: 600;
   text-transform: capitalize;
+}
+
+.fav-cond-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 .fav-precip {

@@ -360,8 +360,10 @@ async function fetchFavoriteWeather() {
           <span class="fav-range">${Math.round(high)}° / ${Math.round(low)}°</span>
         </div>
         <div class="fav-col-right">
-          <img class="fav-icon" src="${getWeatherIconUrl(symbolCode)}" alt="${translateSymbol(symbolCode)}" />
-          <span class="fav-cond">${translateSymbol(symbolCode)}</span>
+          <div class="fav-cond-wrapper">
+            <img class="fav-icon" src="${getWeatherIconUrl(symbolCode)}" alt="" />
+            <span class="fav-cond">${translateSymbol(symbolCode)}</span>
+          </div>
           <span class="fav-precip">${precipText}</span>
           <span class="fav-precip-prob">Regn 6t: ${Math.round(maxRainProb6h)}%</span>
         </div>
