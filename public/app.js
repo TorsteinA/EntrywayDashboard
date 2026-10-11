@@ -373,6 +373,11 @@ async function fetchTransit() {
   }
 }
 
+function fetchAllWeather() {
+  fetchHomeWeather();
+  fetchFavoriteWeather();
+}
+
 function sToMs(s) {
   return s * 1000;
 }
@@ -381,15 +386,12 @@ function minToMs(m) {
   return m * 60 * 1000;
 }
 
-// Initialize application
+// Initialize application and set refresh intervals
 updateClock();
-setInterval(updateClock, 1000);
+setInterval(updateClock, sToMs(1));
 
-fetchHomeWeather();
-fetchFavoriteWeather();
+fetchAllWeather();
+setInterval(fetchAllWeather, minToMs(15));
+
 fetchTransit();
-
-// Set refresh intervals
 setInterval(fetchTransit, sToMs(30));
-setInterval(fetchHomeWeather, minToMs(12));
-setInterval(fetchFavoriteWeather, minToMs(15));
