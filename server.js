@@ -70,8 +70,9 @@ app.get("/api/weather/custom", async (req, res) => {
 // Proxy Endpoint for Bring/Posten Delivery Dates API
 app.get("/api/post", async (req, res) => {
   try {
-    // Restrict lookAhead parameter to fetch only the first upcoming delivery date
     const url = `https://api.bring.com/shippingguide/api/delivery-dates?postalCode=${POSTAL_CODE}&lookAhead=4`;
+
+    console.log(`[Posten Proxy] Fetching URL: ${url}`);
 
     const response = await fetch(url, {
       headers: {
@@ -81,17 +82,27 @@ app.get("/api/post", async (req, res) => {
       },
     });
 
+    const responseText = await response.text();
+
     if (!response.ok) {
-      return res
-        .status(response.status)
-        .json({ error: "Failed to fetch mail delivery status" });
+      console.error(
+        `[Posten Proxy Error] Status: ${response.status} ${response.statusText}`,
+      );
+      console.error(`[Posten Proxy Response]:`, responseText);
+      return res.status(response.status).json({
+        error: "Failed to fetch mail delivery status",
+        status: response.status,
+        details: responseText,
+      });
     }
 
-    const data = await response.json();
+    const data = JSON.parse(responseText);
     res.json(data);
   } catch (err) {
-    console.error("Posten Proxy Error:", err);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("[Posten Proxy Exception]:", err);
+    res
+      .status(500)
+      .json({ error: "Internal server error", details: err.message });
   }
 });
 
