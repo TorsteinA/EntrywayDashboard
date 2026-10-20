@@ -71,8 +71,7 @@ app.get("/api/weather/custom", async (req, res) => {
 // Proxy Endpoint for Bring/Posten Delivery Dates API
 app.get("/api/post", async (req, res) => {
   try {
-    // const url = `https://api.bring.com/shippingguide/api/delivery-dates?postalCode=${POSTAL_CODE}&lookAhead=4`;
-    const url = `http://api.bring.com/address/api/${COUNTRY_CODE}/postal-codes/${POSTAL_CODE}/mailbox-delivery-dates&lookAhead=4`;
+    const url = `http://api.bring.com/address/api/${COUNTRY_CODE}/postal-codes/${POSTAL_CODE}/mailbox-delivery-dates?lookAhead=4`;
 
     console.log(`[Posten Proxy] Fetching URL: ${url}`);
 
