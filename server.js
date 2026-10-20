@@ -12,6 +12,7 @@ const STOP_PLACE_ID = process.env.STOP_PLACE_ID || "NSR:StopPlace:58211";
 
 // Postal code configuration
 const POSTAL_CODE = process.env.POSTAL_CODE || "1900";
+const COUNTRY_CODE = process.env.COUNTRY_CODE || "NO";
 const MYBRING_USER = process.env.MYBRING_USER || "";
 const MYBRING_KEY = process.env.MYBRING_KEY || "";
 const BRING_CLIENT_URL =
@@ -70,7 +71,8 @@ app.get("/api/weather/custom", async (req, res) => {
 // Proxy Endpoint for Bring/Posten Delivery Dates API
 app.get("/api/post", async (req, res) => {
   try {
-    const url = `https://api.bring.com/shippingguide/api/delivery-dates?postalCode=${POSTAL_CODE}&lookAhead=4`;
+    // const url = `https://api.bring.com/shippingguide/api/delivery-dates?postalCode=${POSTAL_CODE}&lookAhead=4`;
+    const url = `http://api.bring.com/address/api/${COUNTRY_CODE}/postal-codes/${POSTAL_CODE}/mailbox-delivery-dates&lookAhead=4`;
 
     console.log(`[Posten Proxy] Fetching URL: ${url}`);
 
