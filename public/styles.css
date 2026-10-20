@@ -65,6 +65,64 @@ body {
   text-transform: capitalize;
 }
 
+/* Post Status Pill Container */
+.post-pill {
+  display: inline-flex;
+  align-items: center;
+  align-self: center; /* Center horizontally in flex-column clock block */
+  gap: 0.45rem;
+  margin-top: 0.6rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 2rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-color);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-main);
+  transition: all 0.3s ease;
+}
+
+/* Mail SVG Icon */
+.post-icon {
+  width: 1.15rem;
+  height: 1.15rem;
+  flex-shrink: 0;
+  stroke: var(--text-muted); /* Default fallback icon color */
+  transition: stroke 0.3s ease;
+}
+
+/* --- Contextual Post Status Styles --- */
+
+/* Delivery TODAY: Bright Green Pill + Glowing Icon */
+.post-pill.today {
+  border-color: rgba(16, 185, 129, 0.4);
+  background: rgba(16, 185, 129, 0.08);
+}
+.post-pill.today .post-icon {
+  stroke: #10b981; /* Matches green bus countdown color */
+  filter: drop-shadow(0 0 4px rgba(16, 185, 129, 0.5));
+}
+
+/* Delivery TOMORROW: Accent Color Pill */
+.post-pill.tomorrow {
+  border-color: rgba(59, 130, 246, 0.4);
+  background: rgba(59, 130, 246, 0.08);
+}
+.post-pill.tomorrow .post-icon {
+  stroke: var(--accent-color); /* Matches blue theme accent */
+}
+
+/* Delivery LATER / N/A: Muted Neutral */
+.post-pill.later,
+.post-pill.na {
+  border-color: var(--border-color);
+  color: var(--text-muted);
+}
+.post-pill.later .post-icon,
+.post-pill.na .post-icon {
+  stroke: var(--text-muted);
+}
+
 .transit-section {
   flex: 1;
   display: flex;

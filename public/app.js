@@ -155,6 +155,57 @@ function updateLastRefreshed(elementId) {
       });
   }
 }
+async function fetchPostStatus() {
+  try {
+    const res = await fetch("/api/post");
+    if (!res.ok) throw new Error("Post status fetch failed");
+
+    const data = await res.json();
+    const deliveries = data.deliveries || [];
+
+    // Pick the first upcoming delivery date
+    const nextDelivery = deliveries[0]?.deliveryDate || null;
+    updatePostStatus(nextDelivery);
+  } catch (err) {
+    console.error("Error fetching post status:", err);
+    updatePostStatus(null); // Fallback to N/A
+  }
+}
+
+function updatePostStatus(deliveryDateStr) {
+  const pill = document.getElementById("post-status");
+  const text = document.getElementById("post-text");
+
+  if (!deliveryDateStr) {
+    pill.className = "post-pill na";
+    text.textContent = "N/A";
+    return;
+  }
+
+  const today = new Date();
+  const delivery = new Date(deliveryDateStr);
+
+  // Calculate relative day difference
+  const diffDays = Math.round(
+    (delivery.setHours(0, 0, 0, 0) - today.setHours(0, 0, 0, 0)) /
+      (1000 * 60 * 60 * 24),
+  );
+
+  if (diffDays === 0) {
+    pill.className = "post-pill today";
+    text.textContent = "i dag";
+  } else if (diffDays === 1) {
+    pill.className = "post-pill tomorrow";
+    text.textContent = "i morgen";
+  } else if (diffDays > 1 && diffDays < 7) {
+    const weekday = delivery.toLocaleDateString("no-NO", { weekday: "long" });
+    pill.className = "post-pill later";
+    text.textContent = `på ${weekday}`;
+  } else {
+    pill.className = "post-pill na";
+    text.textContent = "N/A";
+  }
+}
 
 // Fetch primary weather data for home location
 async function fetchHomeWeather() {
@@ -449,6 +500,9 @@ function minToMs(m) {
 // Initialize application and set refresh intervals
 updateClock();
 setInterval(updateClock, sToMs(1));
+
+fetchPostStatus();
+setInterval(fetchPostStatus, minToMs(60));
 
 fetchAllWeather();
 setInterval(fetchAllWeather, minToMs(15));

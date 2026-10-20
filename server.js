@@ -10,6 +10,13 @@ const LAT = process.env.LAT || "59.9550";
 const LON = process.env.LON || "11.0500";
 const STOP_PLACE_ID = process.env.STOP_PLACE_ID || "NSR:StopPlace:58211";
 
+// Postal code configuration
+const POSTAL_CODE = process.env.POSTAL_CODE || "1900";
+const MYBRING_USER = process.env.MYBRING_USER || "";
+const MYBRING_KEY = process.env.MYBRING_KEY || "";
+const BRING_CLIENT_URL =
+  process.env.BRING_CLIENT_URL || "http://localhost:3000";
+
 const USER_AGENT =
   process.env.USER_AGENT || "MyEntryDashboard/1.0 (admin@local.home)";
 const ET_CLIENT_NAME = process.env.ET_CLIENT_NAME || "myhome-entrykiosk";
@@ -57,6 +64,34 @@ app.get("/api/weather/custom", async (req, res) => {
     res.json(data);
   } catch (err) {
     res.status(500).json({ error: "Interne tjenerfeil" });
+  }
+});
+
+// Proxy Endpoint for Bring/Posten Delivery Dates API
+app.get("/api/post", async (req, res) => {
+  try {
+    // Restrict lookAhead parameter to fetch only the first upcoming delivery date
+    const url = `https://api.bring.com/shippingguide/api/delivery-dates?postalCode=${POSTAL_CODE}&lookAhead=4`;
+
+    const response = await fetch(url, {
+      headers: {
+        "X-Mybring-API-Uid": MYBRING_USER,
+        "X-Mybring-API-Key": MYBRING_KEY,
+        "X-Bring-Client-URL": BRING_CLIENT_URL,
+      },
+    });
+
+    if (!response.ok) {
+      return res
+        .status(response.status)
+        .json({ error: "Failed to fetch mail delivery status" });
+    }
+
+    const data = await response.json();
+    res.json(data);
+  } catch (err) {
+    console.error("Posten Proxy Error:", err);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
