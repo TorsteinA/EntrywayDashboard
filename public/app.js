@@ -155,20 +155,24 @@ function updateLastRefreshed(elementId) {
       });
   }
 }
+
 async function fetchPostStatus() {
   try {
     const res = await fetch("/api/post");
     if (!res.ok) throw new Error("Post status fetch failed");
 
     const data = await res.json();
-    const deliveries = data.deliveries || [];
 
-    // Pick the first upcoming delivery date
-    const nextDelivery = deliveries[0]?.deliveryDate || null;
+    // Extract array from delivery_dates property
+    const dates = data.delivery_dates || [];
+
+    // Select the first upcoming delivery date string
+    const nextDelivery = dates[0] || null;
+
     updatePostStatus(nextDelivery);
   } catch (err) {
     console.error("Error fetching post status:", err);
-    updatePostStatus(null); // Fallback to N/A
+    updatePostStatus(null);
   }
 }
 
