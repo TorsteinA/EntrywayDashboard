@@ -6,6 +6,7 @@ const favoriteLocations = [
   { name: "Bygdøy", lat: 59.91356, lon: 10.68312, travelTimeMins: 30 },
   { name: "Asker", lat: 59.8338, lon: 10.4354, travelTimeMins: 60 },
 ];
+
 // Destination to exclude (incoming buses)
 const EXCLUDE_DESTINATION = "Vardefjellet";
 
@@ -78,6 +79,51 @@ function translateSymbol(code) {
   if (!code) return "";
   const cleanCode = code.replace(/_(night|day|polarnight)/g, "").toLowerCase();
   return weatherTranslations[cleanCode] || cleanCode.replace(/_/g, " ");
+}
+
+const WASTE_CONFIG = {
+  1: {
+    name: "Restavfall",
+    icon: `<svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`,
+  },
+  2: {
+    name: "Papp / Papir",
+    icon: `<svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`,
+  },
+};
+
+// Reusable relative-time-to-text formatter
+function formatRelativeDate(dateInput) {
+  if (!dateInput) return "N/A";
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const targetDate = new Date(dateInput);
+  targetDate.setHours(0, 0, 0, 0);
+
+  const diffTime = targetDate - today;
+  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return { text: "i dag", state: "urgent-today" };
+  if (diffDays === 1) return { text: "i morgen", state: "urgent-tomorrow" };
+
+  if (diffDays > 1 && diffDays < 7) {
+    const weekday = targetDate.toLocaleDateString("no-NO", { weekday: "long" });
+    return { text: `kommende ${weekday}`, state: "later" };
+  }
+  if (diffDays >= 7 && diffDays < 14) {
+    const weekday = targetDate.toLocaleDateString("no-NO", { weekday: "long" });
+    return { text: `neste ${weekday}`, state: "later" };
+  }
+
+  // Fallback for dates further out than 7 days
+  const formattedDate = targetDate.toLocaleDateString("no-NO", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  });
+  return { text: formattedDate, state: "later" };
 }
 
 // Calculate perceived temperature ("Føles som")
@@ -162,17 +208,18 @@ async function fetchPostStatus() {
     if (!res.ok) throw new Error("Post status fetch failed");
 
     const data = await res.json();
+    const dates = data.delivery_dates || data.deliveryDates || [];
+    const nextDelivery =
+      typeof dates[0] === "string" ? dates[0] : dates[0]?.date || null;
 
-    // Extract array from delivery_dates property
-    const dates = data.delivery_dates || [];
+    const mailCard = document.getElementById("mail-card");
+    const mailText = document.getElementById("post-text");
 
-    // Select the first upcoming delivery date string
-    const nextDelivery = dates[0] || null;
-
-    updatePostStatus(nextDelivery);
+    const formatted = formatRelativeDate(nextDelivery);
+    mailCard.className = `service-card ${formatted.state}`;
+    mailText.textContent = formatted.text;
   } catch (err) {
     console.error("Error fetching post status:", err);
-    updatePostStatus(null);
   }
 }
 
@@ -488,9 +535,108 @@ async function fetchTransit() {
   }
 }
 
+async function fetchWasteSchedule() {
+  try {
+    const res = await fetch("/api/waste");
+    if (!res.ok) throw new Error("Waste schedule fetch failed");
+
+    const data = await res.json();
+    const container = document.getElementById("waste-list");
+    const todayStr = new Date().toISOString().split("T")[0];
+
+    container.innerHTML = data
+      .map((item) => {
+        const config = WASTE_CONFIG[item.FraksjonId] || {
+          name: `Fraksjon ${item.FraksjonId}`,
+          icon: `<svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/></svg>`,
+        };
+
+        const nextDateRaw = item.Tommedatoer.find(
+          (d) => d.split("T")[0] >= todayStr,
+        );
+        const formatted = formatRelativeDate(nextDateRaw);
+
+        return `
+        <div class="service-card ${formatted.state}">
+          <div class="service-icon-wrapper">${config.icon}</div>
+          <div class="service-details">
+            <span class="service-label">${config.name}:</span>
+            <span class="service-value">${formatted.text}</span>
+          </div>
+        </div>
+      `;
+      })
+      .join("");
+  } catch (err) {
+    console.error("Error fetching waste schedule:", err);
+  }
+}
+
+function renderWasteCards(fractions) {
+  const container = document.getElementById("waste-list");
+  if (!container) return;
+
+  const todayStr = new Date().toISOString().split("T")[0];
+
+  container.innerHTML = fractions
+    .map((item) => {
+      const config = WASTE_CONFIG[item.FraksjonId] || {
+        name: `Fraksjon ${item.FraksjonId}`,
+        icon: `<svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/></svg>`,
+      };
+
+      // Find the next upcoming pickup date
+      const nextDateRaw = item.Tommedatoer.find(
+        (d) => d.split("T")[0] >= todayStr,
+      );
+      if (!nextDateRaw) return "";
+
+      const dateObj = new Date(nextDateRaw);
+
+      // Determine state
+      let stateClass = "later";
+      let dateText = "";
+
+      const diffDays = Math.round(
+        (dateObj.setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0)) /
+          86400000,
+      );
+
+      if (diffDays === 0) {
+        stateClass = "urgent-today";
+        dateText = "i dag";
+      } else if (diffDays === 1) {
+        stateClass = "urgent-tomorrow";
+        dateText = "i morgen";
+      } else {
+        dateText = dateObj.toLocaleDateString("no-NO", {
+          weekday: "short",
+          day: "numeric",
+          month: "short",
+        });
+      }
+
+      return `
+      <div class="service-card waste-card ${stateClass}">
+        <div class="service-icon-wrapper">${config.icon}</div>
+        <div class="service-details">
+          <span class="service-label">${config.name}:</span>
+          <span class="service-value">${dateText}</span>
+        </div>
+      </div>
+    `;
+    })
+    .join("");
+}
+
 function fetchAllWeather() {
   fetchHomeWeather();
   fetchFavoriteWeather();
+}
+
+function fetchUtilitySchedules() {
+  fetchPostStatus();
+  fetchWasteSchedule();
 }
 
 function sToMs(s) {
@@ -501,15 +647,19 @@ function minToMs(m) {
   return m * 60 * 1000;
 }
 
+function hToMs(h) {
+  return h * 60 * 60 * 1000;
+}
+
 // Initialize application and set refresh intervals
 updateClock();
 setInterval(updateClock, sToMs(1));
 
-fetchPostStatus();
-setInterval(fetchPostStatus, minToMs(60));
+fetchTransit();
+setInterval(fetchTransit, sToMs(30));
 
 fetchAllWeather();
 setInterval(fetchAllWeather, minToMs(15));
 
-fetchTransit();
-setInterval(fetchTransit, sToMs(30));
+fetchUtilitySchedules();
+setInterval(fetchUtilitySchedules, hToMs(3));

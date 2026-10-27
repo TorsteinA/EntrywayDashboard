@@ -34,17 +34,18 @@ body {
 }
 
 /* ==========================================================================
-   TOP ROW (~25% height)
+   TOP ROW LAYOUT
    ========================================================================== */
 .top-row {
   display: flex;
-  height: 25%;
-  gap: 2rem;
+  height: 22%;
+  gap: 1.5rem;
   align-items: center;
 }
 
+/* Clock Section (Restored centering and original sizing) */
 .clock-section {
-  flex: 0 0 28%;
+  flex: 0 0 22%;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -65,92 +66,129 @@ body {
   text-transform: capitalize;
 }
 
-/* Post Status Pill Container */
-.post-pill {
-  display: inline-flex;
+/* Middle Services / Utility Section (Compressed to ~22% Width) */
+.services-section {
+  flex: 0 0 24%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  justify-content: center;
+}
+
+.waste-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+/* Slim Compact Service Cards */
+.service-card {
+  display: flex;
   align-items: center;
-  align-self: center; /* Center horizontally in flex-column clock block */
-  gap: 0.45rem;
-  margin-top: 0.6rem;
-  padding: 0.25rem 0.75rem;
-  border-radius: 2rem;
-  background: rgba(255, 255, 255, 0.04);
+  gap: 0.5rem;
+  background: var(--card-bg);
   border: 1px solid var(--border-color);
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--text-main);
+  border-radius: 0.5rem;
+  padding: 0.35rem 0.65rem;
   transition: all 0.3s ease;
 }
 
-/* Mail SVG Icon */
-.post-icon {
-  width: 1.15rem;
-  height: 1.15rem;
+.service-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
-  stroke: var(--text-muted); /* Default fallback icon color */
+}
+
+.service-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  stroke: var(--text-muted);
   transition: stroke 0.3s ease;
 }
 
-/* --- Contextual Post Status Styles --- */
+.service-details {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
-/* Delivery TODAY: Bright Green Pill + Glowing Icon */
-.post-pill.today {
+.service-label {
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.service-value {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* Contextual Status Colors */
+.service-card.urgent-today {
   border-color: rgba(16, 185, 129, 0.4);
   background: rgba(16, 185, 129, 0.08);
 }
-.post-pill.today .post-icon {
-  stroke: #10b981; /* Matches green bus countdown color */
-  filter: drop-shadow(0 0 4px rgba(16, 185, 129, 0.5));
+.service-card.urgent-today .service-icon {
+  stroke: #10b981;
+}
+.service-card.urgent-today .service-value {
+  color: #10b981;
+  font-weight: 700;
 }
 
-/* Delivery TOMORROW: Accent Color Pill */
-.post-pill.tomorrow {
+.service-card.urgent-tomorrow {
   border-color: rgba(59, 130, 246, 0.4);
   background: rgba(59, 130, 246, 0.08);
 }
-.post-pill.tomorrow .post-icon {
-  stroke: var(--accent-color); /* Matches blue theme accent */
+.service-card.urgent-tomorrow .service-icon {
+  stroke: var(--accent-color);
+}
+.service-card.urgent-tomorrow .service-value {
+  color: var(--accent-color);
+  font-weight: 600;
 }
 
-/* Delivery LATER / N/A: Muted Neutral */
-.post-pill.later,
-.post-pill.na {
+.service-card.later,
+.service-card.na {
   border-color: var(--border-color);
-  color: var(--text-muted);
 }
-.post-pill.later .post-icon,
-.post-pill.na .post-icon {
+.service-card.later .service-icon,
+.service-card.na .service-icon {
   stroke: var(--text-muted);
 }
 
+/* Transit Section (Restored Width and Layout) */
 .transit-section {
   flex: 1;
   display: flex;
-  align-items: flex-start;
-  gap: 2rem;
+  align-items: center;
+  gap: 1.5rem;
   height: 100%;
 }
 
 .transit-meta {
-  flex: 0 0 210px;
+  flex: 0 0 180px;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  align-items: end;
-  height: 100%;
+  gap: 0.2rem;
+  align-items: flex-end;
+  text-align: right;
   justify-content: center;
 }
 
 .transit-meta h2 {
-  font-size: 1.1rem;
+  font-size: 1rem;
   color: var(--text-muted);
   letter-spacing: 1px;
   text-transform: uppercase;
-  text-align: end;
 }
 
 .stop-name {
-  font-size: 1.3rem;
+  font-size: 1.2rem;
   color: var(--accent-color);
   font-weight: 600;
 }
@@ -159,7 +197,7 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.45rem;
   height: 100%;
   justify-content: center;
 }
@@ -169,36 +207,36 @@ body {
   align-items: center;
   justify-content: space-between;
   background: var(--card-bg);
-  padding: 0.75rem 1.25rem;
-  border-radius: 0.75rem;
+  padding: 0.55rem 1rem;
+  border-radius: 0.65rem;
   border: 1px solid var(--border-color);
-  border-left: 6px solid var(--bus-color);
+  border-left: 5px solid var(--bus-color);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
 .transit-left {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .line-number {
-  font-size: 1.35rem;
+  font-size: 1.2rem;
   font-weight: 800;
-  min-width: 3rem;
+  min-width: 2.75rem;
   text-align: center;
   background: #2d3748;
-  padding: 0.2rem 0.5rem;
-  border-radius: 0.4rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 0.35rem;
 }
 
 .destination {
-  font-size: 1.3rem;
+  font-size: 1.15rem;
   font-weight: 600;
 }
 
 .time-until {
-  font-size: 1.4rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: #10b981;
 }
@@ -209,11 +247,11 @@ body {
 }
 
 /* ==========================================================================
-   BOTTOM ROW (~75% height)
+   BOTTOM ROW (~78% height)
    ========================================================================== */
 .bottom-row {
   flex: 1;
-  height: 75%;
+  height: 78%;
 }
 
 .combined-card {
