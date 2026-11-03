@@ -70,7 +70,7 @@ app.get("/api/weather/custom", async (req, res) => {
     const data = await response.json();
     res.json(data);
   } catch (err) {
-    res.status(500).json({ error: "Interne tjenerfeil" });
+    res.status(500).json({ error: "Intern tjenerfeil" });
   }
 });
 

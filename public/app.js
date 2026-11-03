@@ -346,44 +346,72 @@ async function fetchHomeWeather() {
       nextHourMax,
     );
 
-    // Render 3-hour forecast with condition text & rain
-    const forecastContainer = document.getElementById("forecast-3h");
-    forecastContainer.innerHTML = "";
-    for (let i = 1; i <= 3; i++) {
-      if (!timeseries[i]) break;
-      const entry = timeseries[i];
-      const time = new Date(entry.time).toLocaleTimeString("no-NO", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-      const temp = Math.round(entry.data.instant.details.air_temperature);
-      const condCode =
-        entry.data.next_1_hours?.summary?.symbol_code ||
-        entry.data.next_6_hours?.summary?.symbol_code;
-
-      const pMin =
-        entry.data.next_1_hours?.details?.precipitation_amount_min ||
-        entry.data.next_1_hours?.details?.precipitation_amount ||
-        0;
-      const pMax =
-        entry.data.next_1_hours?.details?.precipitation_amount_max ||
-        entry.data.next_1_hours?.details?.precipitation_amount ||
-        pMin;
-
-      forecastContainer.innerHTML += `
-        <div class="forecast-item">
-          <span class="f-time">${time}</span>
-          <img class="f-icon" src="${getWeatherIconUrl(condCode)}" alt="" />
-          <span class="f-cond">${translateSymbol(condCode)}</span>
-          <span class="f-temp">${temp}°</span>
-          <span class="f-rain">${formatPrecipRange(pMin, pMax)}</span>
-        </div>`;
-
-      updateLastRefreshed("weather-last-refreshed");
+    // 1. Render Next 3 Hours Forecast
+    const forecast3hContainer = document.getElementById("forecast-3h");
+    if (forecast3hContainer) {
+      forecast3hContainer.innerHTML = "";
+      for (let i = 1; i <= 3; i++) {
+        if (!timeseries[i]) break;
+        forecast3hContainer.innerHTML += renderForecastCard(timeseries[i]);
+      }
     }
+
+    // 2. Render Tomorrow Morning Forecast (06:00 - 08:00)
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const morningHours = [6, 7, 8];
+    const tomorrowMorningEntries = timeseries.filter((entry) => {
+      const entryDate = new Date(entry.time);
+      return (
+        entryDate.getFullYear() === tomorrow.getFullYear() &&
+        entryDate.getMonth() === tomorrow.getMonth() &&
+        entryDate.getDate() === tomorrow.getDate() &&
+        morningHours.includes(entryDate.getHours())
+      );
+    });
+
+    const forecastTomorrowContainer =
+      document.getElementById("forecast-tomorrow");
+    if (forecastTomorrowContainer) {
+      forecastTomorrowContainer.innerHTML = tomorrowMorningEntries
+        .map((entry) => renderForecastCard(entry))
+        .join("");
+    }
+
+    updateLastRefreshed("weather-last-refreshed");
   } catch (err) {
     console.error("Error fetching home weather:", err);
   }
+}
+
+function renderForecastCard(entry) {
+  const time = new Date(entry.time).toLocaleTimeString("no-NO", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  const temp = Math.round(entry.data.instant.details.air_temperature);
+  const condCode =
+    entry.data.next_1_hours?.summary?.symbol_code ||
+    entry.data.next_6_hours?.summary?.symbol_code;
+
+  const pMin =
+    entry.data.next_1_hours?.details?.precipitation_amount_min ||
+    entry.data.next_1_hours?.details?.precipitation_amount ||
+    0;
+  const pMax =
+    entry.data.next_1_hours?.details?.precipitation_amount_max ||
+    entry.data.next_1_hours?.details?.precipitation_amount ||
+    pMin;
+
+  return `
+    <div class="forecast-item">
+      <span class="f-time">${time}</span>
+      <img class="f-icon" src="${getWeatherIconUrl(condCode)}" alt="" />
+      <span class="f-cond">${translateSymbol(condCode)}</span>
+      <span class="f-temp">${temp}°</span>
+      <span class="f-rain">${formatPrecipRange(pMin, pMax)}</span>
+    </div>`;
 }
 
 // Fetch travel weather dynamically based on travelTimeMins
