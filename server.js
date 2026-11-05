@@ -5,12 +5,13 @@ const fetch = require("node-fetch");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Default configuration (Lillestrøm bussterminal / specific stop)
 const LAT = process.env.LAT || "59.9550";
 const LON = process.env.LON || "11.0500";
+const WORK_LAT = process.env.WORK_LAT || "59.9139";
+const WORK_LON = process.env.WORK_LON || "10.8031";
 const STOP_PLACE_ID = process.env.STOP_PLACE_ID || "NSR:StopPlace:58211";
+const EXCLUDE_DESTINATION = process.env.EXCLUDE_DESTINATION || "";
 
-// Postal code configuration
 const POSTAL_CODE = process.env.POSTAL_CODE || "1900";
 const COUNTRY_CODE = process.env.COUNTRY_CODE || "NO";
 const MYBRING_USER = process.env.MYBRING_USER || "";
@@ -18,7 +19,6 @@ const MYBRING_KEY = process.env.MYBRING_KEY || "";
 const BRING_CLIENT_URL =
   process.env.BRING_CLIENT_URL || "http://localhost:3000";
 
-// Waste service configuration
 const ROAF_KOMMUNENR = process.env.ROAF_KOMMUNENR || "3205";
 const ROAF_GATENAVN = process.env.ROAF_GATENAVN || "";
 const ROAF_GATEKODE = process.env.ROAF_GATEKODE || "";
@@ -27,9 +27,142 @@ const ROAF_HUSNR = process.env.ROAF_HUSNR || "";
 const USER_AGENT =
   process.env.USER_AGENT || "MyEntryDashboard/1.0 (admin@local.home)";
 const ET_CLIENT_NAME = process.env.ET_CLIENT_NAME || "myhome-entrykiosk";
+const FAVORITE_LOCATIONS = process.env.FAVORITE_LOCATIONS
+  ? JSON.parse(process.env.FAVORITE_LOCATIONS)
+  : [];
+
+// 15-Minute Cache for Single Commute Route
+let cachedCommute = null;
+let lastCommuteFetch = 0;
+const COMMUTE_CACHE_TTL = 15 * 60 * 1000;
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
+
+// Endpoint serving app configuration to frontend
+app.get("/api/config", (req, res) => {
+  res.json({
+    favoriteLocations: FAVORITE_LOCATIONS,
+    excludeDestination: EXCLUDE_DESTINATION,
+  });
+});
+
+app.get("/api/commute-eta", async (req, res) => {
+  const now = new Date();
+  const day = now.getDay(); // 0 = Sun, 6 = Sat
+  const hour = now.getHours();
+  const mins = now.getMinutes();
+  const timeInMins = hour * 60 + mins;
+
+  // Active Window: Mon-Fri between 06:30 (390m) and 09:15 (555m)
+  const isWeekday = day >= 1 && day <= 5;
+  const isMorningCommute = isWeekday && timeInMins >= 390 && timeInMins <= 555;
+
+  // Serve cache if fresh
+  if (cachedCommute && Date.now() - lastCommuteFetch < COMMUTE_CACHE_TTL) {
+    return res.json({ active: isMorningCommute, ...cachedCommute });
+  }
+
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+  if (!apiKey || !isMorningCommute) {
+    return res.json({ active: false, data: cachedCommute?.data || null });
+  }
+
+  try {
+    const originLat = parseFloat(LAT);
+    const originLon = parseFloat(LON);
+    const destLat = parseFloat(WORK_LAT);
+    const destLon = parseFloat(WORK_LON);
+
+    // Google Routes API requires departureTime to be in the future for TRAFFIC_AWARE.
+    // Setting 5 minutes into the future aligns with the "Leaving in 5 mins" widget display.
+    const departureDate = new Date(Date.now() + 5 * 60 * 1000);
+
+    const requestBody = {
+      origin: {
+        location: {
+          latLng: {
+            latitude: originLat,
+            longitude: originLon,
+          },
+        },
+      },
+      destination: {
+        location: {
+          latLng: {
+            latitude: destLat,
+            longitude: destLon,
+          },
+        },
+      },
+      travelMode: "DRIVE",
+      routingPreference: "TRAFFIC_AWARE",
+      departureTime: departureDate.toISOString(),
+    };
+
+    const response = await fetch(
+      "https://routes.googleapis.com/directions/v2:computeRoutes",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": apiKey,
+          "X-Goog-FieldMask": "routes.duration,routes.staticDuration",
+        },
+        body: JSON.stringify(requestBody),
+      },
+    );
+
+    const responseText = await response.text();
+
+    if (!response.ok) {
+      console.error(
+        `[Commute ETA Error] HTTP Status: ${response.status} ${response.statusText}`,
+      );
+      console.error("[Commute ETA Error] Google Response Body:", responseText);
+      throw new Error(`Google Routes API returned status ${response.status}`);
+    }
+
+    const data = JSON.parse(responseText);
+    const route = data.routes?.[0];
+
+    if (route) {
+      const durationSec = parseInt(route.duration, 10) || 0;
+      const normalSec = parseInt(route.staticDuration, 10) || durationSec;
+
+      const travelMins = Math.round(durationSec / 60);
+      const delayMins = Math.max(0, Math.round((durationSec - normalSec) / 60));
+
+      // Expected arrival time: departureDate + travel duration
+      const arrivalDate = new Date(
+        departureDate.getTime() + travelMins * 60 * 1000,
+      );
+      const arrivalTimeStr = arrivalDate.toLocaleTimeString("no-NO", {
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "Europe/Oslo",
+      });
+
+      cachedCommute = {
+        data: {
+          travelMins,
+          delayMins,
+          arrivalTimeStr,
+          trafficStatus:
+            delayMins >= 5 ? "heavy" : delayMins >= 2 ? "moderate" : "normal",
+        },
+      };
+      lastCommuteFetch = Date.now();
+
+      return res.json({ active: true, ...cachedCommute });
+    }
+
+    res.json({ active: false, data: null });
+  } catch (err) {
+    console.error("Commute ETA Proxy Error:", err);
+    res.json({ active: false, data: cachedCommute?.data || null });
+  }
+});
 
 // Proxy for MET Norway Weather API
 app.get("/api/weather", async (req, res) => {
@@ -116,7 +249,6 @@ app.get("/api/post", async (req, res) => {
 // Proxy endpoint for Entur / Ruter GraphQL API
 app.post("/api/transit", async (req, res) => {
   try {
-    // You can pass either a StopPlace ID (NSR:StopPlace:...) or a Quay ID (NSR:Quay:...)
     const query = `
       query GetDepartures($id: String!) {
         stopPlace(id: $id) {
@@ -183,7 +315,6 @@ app.get("/api/waste", async (req, res) => {
       return res.status(400).json({ error: "Missing ROAF address parameters" });
     }
 
-    // 1. Build the inner URL parameters securely
     const params = new URLSearchParams({
       kommunenr: kommunenr,
       gatenavn: gatenavn,
@@ -191,15 +322,12 @@ app.get("/api/waste", async (req, res) => {
       husnr: husnr,
     });
 
-    // 2. Direct Backend API URL
-    const directUrl = `https://komteksky.norkart.no/MinRenovasjon.Api/api/tommekalender?${params.toString()}`;
-
-    // 3. Azure Proxy URL (The ENTIRE directUrl must be URL-encoded so the '&'s don't break the proxy)
-    const proxyUrl = `https://norkartrenovasjon.azurewebsites.net/proxyserver.ashx?server=${encodeURIComponent(directUrl)}`;
-
     console.log(`[ROAF Proxy] Trying direct fetch...`);
 
-    // **CRITICAL FIX**: Norkart strictly requires 'Kommunenr' in the HTTP headers now.
+    const directUrl = `https://komteksky.norkart.no/MinRenovasjon.Api/api/tommekalender?${params.toString()}`;
+
+    const proxyUrl = `https://norkartrenovasjon.azurewebsites.net/proxyserver.ashx?server=${encodeURIComponent(directUrl)}`;
+
     const headers = {
       RenovasjonAppKey: "AE47EE09-2930-4B9A-B244-96B15B64E026",
       Kommunenr: kommunenr,
@@ -207,10 +335,8 @@ app.get("/api/waste", async (req, res) => {
       Accept: "application/json",
     };
 
-    // Try Direct API First
     let response = await fetch(directUrl, { method: "GET", headers });
 
-    // Fallback to Azure Proxy if Direct blocks us
     if (!response.ok) {
       console.log(
         `[ROAF Proxy] Direct failed (${response.status}), falling back to Azure Proxy...`,

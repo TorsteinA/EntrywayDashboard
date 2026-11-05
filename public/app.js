@@ -1,14 +1,18 @@
-// Configure up to 5 favorite locations here
-const favoriteLocations = [
-  { name: "Kongsvinger", lat: 60.1905, lon: 12.0034, travelTimeMins: 70 },
-  { name: "Skarnes", lat: 60.26884, lon: 11.68211, travelTimeMins: 40 },
-  { name: "Helsfyr", lat: 59.9139, lon: 10.8031, travelTimeMins: 25 },
-  { name: "Bygdøy", lat: 59.91356, lon: 10.68312, travelTimeMins: 30 },
-  { name: "Asker", lat: 59.8338, lon: 10.4354, travelTimeMins: 60 },
-];
+let favoriteLocations = [];
+let EXCLUDE_DESTINATION = "";
 
-// Destination to exclude (incoming buses)
-const EXCLUDE_DESTINATION = "Vardefjellet";
+async function loadConfig() {
+  try {
+    const res = await fetch("/api/config");
+    if (res.ok) {
+      const config = await res.json();
+      favoriteLocations = config.favoriteLocations || [];
+      EXCLUDE_DESTINATION = config.excludeDestination || "";
+    }
+  } catch (err) {
+    console.error("Error loading configuration:", err);
+  }
+}
 
 // Map MET Norway symbol codes to Norwegian labels
 const weatherTranslations = {
@@ -41,23 +45,19 @@ const weatherTranslations = {
   snow: "Snø",
   heavysnow: "Kraftig snø",
 
-  // Thunder variants (Rain)
+  // Thunder variants
   lightrainshowersandthunder: "Lette regnbyger og torden",
   rainshowersandthunder: "Regnbyger og torden",
   heavyrainshowersandthunder: "Kraftige regnbyger og torden",
   lightrainandthunder: "Lett regn og torden",
   rainandthunder: "Regn og torden",
   heavyrainandthunder: "Kraftig regn og torden",
-
-  // Thunder variants (Sleet)
   lightsleetshowersandthunder: "Lette sluddbyger og torden",
   sleetshowersandthunder: "Sluddbyger og torden",
   heavysleetshowersandthunder: "Kraftige sluddbyger og torden",
   lightsleetandthunder: "Lett sludd og torden",
   sleetandthunder: "Sludd og torden",
   heavysleetandthunder: "Kraftig sludd og torden",
-
-  // Thunder variants (Snow)
   lightsnowshowersandthunder: "Lette snøbyger og torden",
   snowshowersandthunder: "Snøbyger og torden",
   heavysnowshowersandthunder: "Kraftige snøbyger og torden",
@@ -69,7 +69,6 @@ const weatherTranslations = {
   fog: "Tåke",
 };
 
-// Get SVG icon URL from MET Norway's official GitHub / CDN repo
 function getWeatherIconUrl(symbolCode) {
   if (!symbolCode) return "";
   return `https://raw.githubusercontent.com/metno/weathericons/main/weather/svg/${symbolCode}.svg`;
@@ -92,9 +91,8 @@ const WASTE_CONFIG = {
   },
 };
 
-// Reusable relative-time-to-text formatter
 function formatRelativeDate(dateInput) {
-  if (!dateInput) return "N/A";
+  if (!dateInput) return { text: "N/A", state: "na" };
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -117,7 +115,6 @@ function formatRelativeDate(dateInput) {
     return { text: `neste ${weekday}`, state: "later" };
   }
 
-  // Fallback for dates further out than 7 days
   const formattedDate = targetDate.toLocaleDateString("no-NO", {
     weekday: "short",
     day: "numeric",
@@ -126,7 +123,6 @@ function formatRelativeDate(dateInput) {
   return { text: formattedDate, state: "later" };
 }
 
-// Calculate perceived temperature ("Føles som")
 function calculateFeelsLike(tempC, windSpeedMs, humidityPct) {
   const windKmH = windSpeedMs * 3.6;
   if (tempC <= 10 && windKmH > 4.8) {
@@ -145,7 +141,6 @@ function calculateFeelsLike(tempC, windSpeedMs, humidityPct) {
   return Math.round(tempC);
 }
 
-// Format precipitation range (min-max mm)
 function formatPrecipRange(minVal, maxVal) {
   if (minVal === undefined && maxVal === undefined) return "0 mm";
   const min = minVal || 0;
@@ -173,7 +168,6 @@ function getClosestTimeseries(timeseries, travelTimeMins = 60) {
   return closestEntry;
 }
 
-// Update clock and date
 function updateClock() {
   const now = new Date();
   document.getElementById("time").textContent = now.toLocaleTimeString(
@@ -186,18 +180,18 @@ function updateClock() {
   );
 }
 
-// Update the last refreshed timestamp
-function updateLastRefreshed(elementId) {
-  const now = new Date();
+function updateLastRefreshed(elementId, serverTimestampStr = null) {
+  const dateObj = serverTimestampStr
+    ? new Date(serverTimestampStr)
+    : new Date();
   const el = document.getElementById(elementId);
   if (el) {
     el.textContent =
       "Oppdatert: " +
-      now.toLocaleTimeString("no-NO", {
+      dateObj.toLocaleTimeString("no-NO", {
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit",
-        hour12: false,
       });
   }
 }
@@ -223,42 +217,43 @@ async function fetchPostStatus() {
   }
 }
 
-function updatePostStatus(deliveryDateStr) {
-  const pill = document.getElementById("post-status");
-  const text = document.getElementById("post-text");
+async function fetchWasteSchedule() {
+  try {
+    const res = await fetch("/api/waste");
+    if (!res.ok) throw new Error("Waste schedule fetch failed");
 
-  if (!deliveryDateStr) {
-    pill.className = "post-pill na";
-    text.textContent = "N/A";
-    return;
-  }
+    const data = await res.json();
+    const container = document.getElementById("waste-list");
+    const todayStr = new Date().toISOString().split("T")[0];
 
-  const today = new Date();
-  const delivery = new Date(deliveryDateStr);
+    container.innerHTML = data
+      .map((item) => {
+        const config = WASTE_CONFIG[item.FraksjonId] || {
+          name: `Fraksjon ${item.FraksjonId}`,
+          icon: `<svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/></svg>`,
+        };
 
-  // Calculate relative day difference
-  const diffDays = Math.round(
-    (delivery.setHours(0, 0, 0, 0) - today.setHours(0, 0, 0, 0)) /
-      (1000 * 60 * 60 * 24),
-  );
+        const nextDateRaw = item.Tommedatoer.find(
+          (d) => d.split("T")[0] >= todayStr,
+        );
+        const formatted = formatRelativeDate(nextDateRaw);
 
-  if (diffDays === 0) {
-    pill.className = "post-pill today";
-    text.textContent = "i dag";
-  } else if (diffDays === 1) {
-    pill.className = "post-pill tomorrow";
-    text.textContent = "i morgen";
-  } else if (diffDays > 1 && diffDays < 7) {
-    const weekday = delivery.toLocaleDateString("no-NO", { weekday: "long" });
-    pill.className = "post-pill later";
-    text.textContent = `på ${weekday}`;
-  } else {
-    pill.className = "post-pill na";
-    text.textContent = "N/A";
+        return `
+        <div class="service-card ${formatted.state}">
+          <div class="service-icon-wrapper">${config.icon}</div>
+          <div class="service-details">
+            <span class="service-label">${config.name}:</span>
+            <span class="service-value">${formatted.text}</span>
+          </div>
+        </div>
+      `;
+      })
+      .join("");
+  } catch (err) {
+    console.error("Error fetching waste schedule:", err);
   }
 }
 
-// Fetch primary weather data for home location
 async function fetchHomeWeather() {
   try {
     const res = await fetch("/api/weather");
@@ -289,12 +284,10 @@ async function fetchHomeWeather() {
       iconEl.alt = translateSymbol(symbolCode);
     }
 
-    // Left column metrics
     document.getElementById("wind-speed").textContent = `${windSpeed} m/s`;
     document.getElementById("humidity").textContent = `${humidity}%`;
     document.getElementById("cloud-cover").textContent = `${cloudCover}%`;
 
-    // Today's High/Low & Rain totals
     let high = -Infinity,
       low = Infinity;
     let maxRainProb = 0;
@@ -322,7 +315,6 @@ async function fetchHomeWeather() {
       maxRainTotal += pMax;
     });
 
-    // Next 60 minutes rain
     const nextHourDetails = timeseries[0].data.next_1_hours?.details;
     const nextHourMin =
       nextHourDetails?.precipitation_amount_min ||
@@ -336,7 +328,6 @@ async function fetchHomeWeather() {
     document.getElementById("high-temp").textContent = `${Math.round(high)}°`;
     document.getElementById("low-temp").textContent = `${Math.round(low)}°`;
 
-    // Right column metrics
     document.getElementById("rain-prob-today").textContent =
       `${Math.round(maxRainProb)}%`;
     document.getElementById("rain-amount-today").textContent =
@@ -346,7 +337,6 @@ async function fetchHomeWeather() {
       nextHourMax,
     );
 
-    // 1. Render Next 3 Hours Forecast
     const forecast3hContainer = document.getElementById("forecast-3h");
     if (forecast3hContainer) {
       forecast3hContainer.innerHTML = "";
@@ -356,7 +346,6 @@ async function fetchHomeWeather() {
       }
     }
 
-    // 2. Render Tomorrow Morning Forecast (06:00 - 08:00)
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
 
@@ -414,99 +403,161 @@ function renderForecastCard(entry) {
     </div>`;
 }
 
-// Fetch travel weather dynamically based on travelTimeMins
+// Fetch Morning Work Commute ETA
+async function fetchCommuteETA() {
+  const widget = document.getElementById("commute-widget");
+  if (!widget) return;
+
+  try {
+    const res = await fetch("/api/commute-eta");
+    if (!res.ok) {
+      widget.style.display = "none";
+      return;
+    }
+    const json = await res.json();
+
+    if (json.active && json.data) {
+      const { travelMins, delayMins, arrivalTimeStr, trafficStatus } =
+        json.data;
+
+      const pill = document.getElementById("commute-pill");
+      const delayEl = document.getElementById("commute-delay");
+      const arrivalEl = document.getElementById("commute-arrival");
+
+      pill.textContent = `🚗 ${travelMins} min`;
+      pill.className = `commute-pill traffic-${trafficStatus}`;
+
+      if (delayMins > 0) {
+        delayEl.textContent = `(+${delayMins}m)`;
+        delayEl.style.display = "inline";
+      } else {
+        delayEl.style.display = "none";
+      }
+
+      arrivalEl.textContent = arrivalTimeStr;
+      widget.style.display = "flex";
+    } else {
+      widget.style.display = "none";
+    }
+  } catch (err) {
+    console.error("Error fetching commute ETA:", err);
+    widget.style.display = "none";
+  }
+}
+
 async function fetchFavoriteWeather() {
   const container = document.getElementById("favorites-list");
+  if (!container) return;
   container.innerHTML = "";
 
   for (const loc of favoriteLocations.slice(0, 5)) {
+    const travelMins = loc.travelTimeMins || 60;
+    const arrivalDate = new Date(Date.now() + travelMins * 60 * 1000);
+    const arrivalTimeStr = arrivalDate.toLocaleTimeString("no-NO", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    let arrivalTempStr = "--°";
+    let rangeStr = "--° / --°";
+    let symbolCode = "";
+    let precipText = "N/A";
+    let maxRainProb6hStr = "--%";
+    let condText = "Utilgjengelig";
+
     try {
       const res = await fetch(
         `/api/weather/custom?lat=${loc.lat}&lon=${loc.lon}`,
       );
-      if (!res.ok) continue;
-      const data = await res.json();
-      const timeseries = data.properties.timeseries;
-      if (!timeseries?.length) continue;
+      if (res.ok) {
+        const data = await res.json();
+        const timeseries = data.properties?.timeseries;
+        if (timeseries?.length) {
+          const arrivalData = getClosestTimeseries(timeseries, travelMins);
+          const arrivalIndex = timeseries.indexOf(arrivalData);
 
-      // Select timeseries entry closest to calculated arrival time
-      const travelMins = loc.travelTimeMins || 60;
-      const arrivalData = getClosestTimeseries(timeseries, travelMins);
-      const arrivalIndex = timeseries.indexOf(arrivalData);
+          const arrivalTemp = Math.round(
+            arrivalData.data.instant.details.air_temperature,
+          );
+          arrivalTempStr = `${arrivalTemp}°`;
 
-      const arrivalTemp = Math.round(
-        arrivalData.data.instant.details.air_temperature,
-      );
-      const symbolCode =
-        arrivalData.data.next_1_hours?.summary?.symbol_code ||
-        arrivalData.data.next_6_hours?.summary?.symbol_code;
+          symbolCode =
+            arrivalData.data.next_1_hours?.summary?.symbol_code ||
+            arrivalData.data.next_6_hours?.summary?.symbol_code;
+          condText = translateSymbol(symbolCode);
 
-      // Expected arrival hour precipitation amount (mm)
-      const pMin =
-        arrivalData.data.next_1_hours?.details?.precipitation_amount_min ||
-        arrivalData.data.next_1_hours?.details?.precipitation_amount ||
-        0;
-      const pMax =
-        arrivalData.data.next_1_hours?.details?.precipitation_amount_max ||
-        arrivalData.data.next_1_hours?.details?.precipitation_amount ||
-        pMin;
-      const precipText = formatPrecipRange(pMin, pMax);
+          const pMin =
+            arrivalData.data.next_1_hours?.details?.precipitation_amount_min ||
+            arrivalData.data.next_1_hours?.details?.precipitation_amount ||
+            0;
+          const pMax =
+            arrivalData.data.next_1_hours?.details?.precipitation_amount_max ||
+            arrivalData.data.next_1_hours?.details?.precipitation_amount ||
+            pMin;
+          precipText = formatPrecipRange(pMin, pMax);
 
-      // Calculate max rain probability over the next 6 hours after arrival
-      let maxRainProb6h = 0;
-      const arrivalWindow = timeseries.slice(arrivalIndex, arrivalIndex + 6);
-      arrivalWindow.forEach((entry) => {
-        const prob1h =
-          entry.data.next_1_hours?.details?.probability_of_precipitation;
-        const prob6h =
-          entry.data.next_6_hours?.details?.probability_of_precipitation;
-        const prob =
-          prob1h !== undefined ? prob1h : prob6h !== undefined ? prob6h : 0;
-        if (prob > maxRainProb6h) maxRainProb6h = prob;
-      });
+          let maxProb = 0;
+          const arrivalWindow = timeseries.slice(
+            arrivalIndex,
+            arrivalIndex + 6,
+          );
+          arrivalWindow.forEach((entry) => {
+            const prob1h =
+              entry.data.next_1_hours?.details?.probability_of_precipitation;
+            const prob6h =
+              entry.data.next_6_hours?.details?.probability_of_precipitation;
+            const prob =
+              prob1h !== undefined ? prob1h : prob6h !== undefined ? prob6h : 0;
+            if (prob > maxProb) maxProb = prob;
+          });
+          maxRainProb6hStr = `${Math.round(maxProb)}%`;
 
-      // Calculate today's High / Low
-      let high = -Infinity,
-        low = Infinity;
-      timeseries.slice(0, 24).forEach((ts) => {
-        const t = ts.data.instant.details.air_temperature;
-        if (t > high) high = t;
-        if (t < low) low = t;
-      });
-
-      const arrivalTime = new Date(arrivalData.time).toLocaleTimeString(
-        "no-NO",
-        { hour: "2-digit", minute: "2-digit" },
-      );
-
-      const item = document.createElement("div");
-      item.className = "fav-card-item";
-      item.innerHTML = `
-        <div class="fav-col-left">
-          <span class="fav-name">${loc.name}</span>
-          <span class="fav-time">Kl. ${arrivalTime}</span>
-        </div>
-        <div class="fav-col-mid">
-          <span class="fav-temp">${arrivalTemp}°</span>
-          <span class="fav-range">${Math.round(high)}° / ${Math.round(low)}°</span>
-        </div>
-        <div class="fav-col-right">
-          <div class="fav-cond-wrapper">
-            <img class="fav-icon" src="${getWeatherIconUrl(symbolCode)}" alt="" />
-            <span class="fav-cond">${translateSymbol(symbolCode)}</span>
-          </div>
-          <span class="fav-precip">${precipText}</span>
-          <span class="fav-precip-prob">Regn 6t: ${Math.round(maxRainProb6h)}%</span>
-        </div>
-      `;
-      container.appendChild(item);
+          let high = -Infinity,
+            low = Infinity;
+          timeseries.slice(0, 24).forEach((ts) => {
+            const t = ts.data.instant.details.air_temperature;
+            if (t > high) high = t;
+            if (t < low) low = t;
+          });
+          rangeStr = `${Math.round(high)}° / ${Math.round(low)}°`;
+        }
+      } else {
+        console.error(
+          `Weather API returned error status for ${loc.name}: ${res.status}`,
+        );
+      }
     } catch (err) {
-      console.error(`Error loading weather for ${loc.name}:`, err);
+      console.error(`Failed to fetch weather for ${loc.name}:`, err);
     }
+
+    const item = document.createElement("div");
+    item.className = "fav-card-item";
+    item.innerHTML = `
+      <div class="fav-col-left">
+        <span class="fav-name">${loc.name}</span>
+        <span class="fav-time">Kl. ${arrivalTimeStr}</span>
+      </div>
+      <div class="fav-col-mid">
+        <span class="fav-temp">${arrivalTempStr}</span>
+        <span class="fav-range">${rangeStr}</span>
+      </div>
+      <div class="fav-col-right">
+        <div class="fav-cond-wrapper">
+          ${
+            symbolCode
+              ? `<img class="fav-icon" src="${getWeatherIconUrl(symbolCode)}" alt="" />`
+              : ""
+          }
+          <span class="fav-cond">${condText}</span>
+        </div>
+        <span class="fav-precip">${precipText}</span>
+        <span class="fav-precip-prob">Regn 6t: ${maxRainProb6hStr}</span>
+      </div>
+    `;
+    container.appendChild(item);
   }
 }
 
-// Fetch public transit departures
 async function fetchTransit() {
   try {
     const res = await fetch("/api/transit", { method: "POST" });
@@ -518,7 +569,6 @@ async function fetchTransit() {
     if (stopPlace?.name)
       document.getElementById("stop-name").textContent = stopPlace.name;
 
-    // Filter out incoming buses heading to Vardefjellet
     if (EXCLUDE_DESTINATION) {
       calls = calls.filter((call) => {
         const dest = call.destinationDisplay?.frontText || "";
@@ -535,7 +585,6 @@ async function fetchTransit() {
       return;
     }
 
-    // Render next 2 outward departures
     calls.slice(0, 2).forEach((call) => {
       const lineCode = call.serviceJourney.journeyPattern.line.publicCode || "";
       const destination = call.destinationDisplay?.frontText || "Ukjent";
@@ -563,131 +612,33 @@ async function fetchTransit() {
   }
 }
 
-async function fetchWasteSchedule() {
-  try {
-    const res = await fetch("/api/waste");
-    if (!res.ok) throw new Error("Waste schedule fetch failed");
-
-    const data = await res.json();
-    const container = document.getElementById("waste-list");
-    const todayStr = new Date().toISOString().split("T")[0];
-
-    container.innerHTML = data
-      .map((item) => {
-        const config = WASTE_CONFIG[item.FraksjonId] || {
-          name: `Fraksjon ${item.FraksjonId}`,
-          icon: `<svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/></svg>`,
-        };
-
-        const nextDateRaw = item.Tommedatoer.find(
-          (d) => d.split("T")[0] >= todayStr,
-        );
-        const formatted = formatRelativeDate(nextDateRaw);
-
-        return `
-        <div class="service-card ${formatted.state}">
-          <div class="service-icon-wrapper">${config.icon}</div>
-          <div class="service-details">
-            <span class="service-label">${config.name}:</span>
-            <span class="service-value">${formatted.text}</span>
-          </div>
-        </div>
-      `;
-      })
-      .join("");
-  } catch (err) {
-    console.error("Error fetching waste schedule:", err);
-  }
-}
-
-function renderWasteCards(fractions) {
-  const container = document.getElementById("waste-list");
-  if (!container) return;
-
-  const todayStr = new Date().toISOString().split("T")[0];
-
-  container.innerHTML = fractions
-    .map((item) => {
-      const config = WASTE_CONFIG[item.FraksjonId] || {
-        name: `Fraksjon ${item.FraksjonId}`,
-        icon: `<svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/></svg>`,
-      };
-
-      // Find the next upcoming pickup date
-      const nextDateRaw = item.Tommedatoer.find(
-        (d) => d.split("T")[0] >= todayStr,
-      );
-      if (!nextDateRaw) return "";
-
-      const dateObj = new Date(nextDateRaw);
-
-      // Determine state
-      let stateClass = "later";
-      let dateText = "";
-
-      const diffDays = Math.round(
-        (dateObj.setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0)) /
-          86400000,
-      );
-
-      if (diffDays === 0) {
-        stateClass = "urgent-today";
-        dateText = "i dag";
-      } else if (diffDays === 1) {
-        stateClass = "urgent-tomorrow";
-        dateText = "i morgen";
-      } else {
-        dateText = dateObj.toLocaleDateString("no-NO", {
-          weekday: "short",
-          day: "numeric",
-          month: "short",
-        });
-      }
-
-      return `
-      <div class="service-card waste-card ${stateClass}">
-        <div class="service-icon-wrapper">${config.icon}</div>
-        <div class="service-details">
-          <span class="service-label">${config.name}:</span>
-          <span class="service-value">${dateText}</span>
-        </div>
-      </div>
-    `;
-    })
-    .join("");
-}
-
-function fetchAllWeather() {
-  fetchHomeWeather();
-  fetchFavoriteWeather();
-}
-
 function fetchUtilitySchedules() {
   fetchPostStatus();
   fetchWasteSchedule();
 }
 
-function sToMs(s) {
-  return s * 1000;
+// Master wake handler triggered when screen turns on
+function refreshAllOnWake() {
+  if (document.visibilityState && document.visibilityState !== "visible")
+    return;
+  fetchTransit();
+  fetchHomeWeather();
+  fetchFavoriteWeather();
+  fetchUtilitySchedules();
+  fetchCommuteETA();
 }
 
-function minToMs(m) {
-  return m * 60 * 1000;
+// Event Listeners for Display Wake (DPMS wake / HDMI signal / focus)
+document.addEventListener("visibilitychange", refreshAllOnWake);
+window.addEventListener("focus", refreshAllOnWake);
+
+// Application Initialization
+async function init() {
+  updateClock();
+  setInterval(updateClock, 1000); // Local clock tick
+
+  await loadConfig();
+  refreshAllOnWake();
 }
 
-function hToMs(h) {
-  return h * 60 * 60 * 1000;
-}
-
-// Initialize application and set refresh intervals
-updateClock();
-setInterval(updateClock, sToMs(1));
-
-fetchTransit();
-setInterval(fetchTransit, sToMs(30));
-
-fetchAllWeather();
-setInterval(fetchAllWeather, minToMs(15));
-
-fetchUtilitySchedules();
-setInterval(fetchUtilitySchedules, hToMs(3));
+init();

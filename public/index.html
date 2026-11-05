@@ -16,13 +16,13 @@
           <div id="date" class="date">Laster dato...</div>
         </div>
 
-        <!-- Top Center: Transit Section (Moved to middle) -->
+        <!-- Top Center: Transit Section -->
         <div class="transit-section">
           <div class="transit-meta">
             <h2>NESTE AVGANGER</h2>
             <span id="stop-name" class="stop-name">Busstopp</span>
             <span id="transit-last-refreshed" class="last-refreshed"
-              >Sist oppdatert: --:--</span
+              Oppdatert: --:--</span
             >
           </div>
           <div id="transit-list" class="transit-list">
@@ -30,9 +30,8 @@
           </div>
         </div>
 
-        <!-- Top Right: Unified Utility Cards (Mail & Waste, Moved to right) -->
+        <!-- Top Right: Mail & Waste -->
         <div class="services-section">
-          <!-- Mail Card -->
           <div id="mail-card" class="service-card later">
             <div class="service-icon-wrapper">
               <svg
@@ -54,7 +53,6 @@
             </div>
           </div>
 
-          <!-- Waste Cards (Restavfall & Papir rendered via JS) -->
           <div id="waste-list" class="waste-list">
             <!-- Dynamic Waste Cards -->
           </div>
@@ -64,12 +62,12 @@
       <!-- BOTTOM ROW (75% Height) -->
       <main class="bottom-row">
         <section class="card combined-card">
-          <!-- Bottom Left: Home Weather (~54% width) -->
+          <!-- Bottom Left: Home Weather -->
           <div class="home-weather-section">
             <div class="card-header">
               <div class="card-title">VÆRET HJEMME</div>
               <div id="weather-last-refreshed" class="last-refreshed">
-                Sist oppdatert: --:--
+                Oppdatert: --:--
               </div>
             </div>
 
@@ -86,11 +84,25 @@
                   <strong id="low-temp">--°</strong>
                 </div>
               </div>
+
+              <!-- Floating Morning Work Commute Widget -->
+              <div
+                id="commute-widget"
+                class="commute-floating-card"
+                style="display: none"
+              >
+                <div class="commute-header">Eta til jobb (om 5 min):</div>
+                <div class="commute-body">
+                  <span class="commute-pill" id="commute-pill">🚗 -- min</span>
+                  <span class="commute-delay" id="commute-delay"></span>
+                  <span class="commute-arrival" id="commute-arrival"
+                    >--:--</span
+                  >
+                </div>
+              </div>
             </div>
 
-            <!-- Reordered 6-Item Metrics Grid -->
             <div class="metrics-grid">
-              <!-- Left Column -->
               <div class="metric-item">
                 Vind: <strong id="wind-speed">-- m/s</strong>
               </div>
@@ -100,8 +112,6 @@
               <div class="metric-item">
                 Skydekke: <strong id="cloud-cover">--%</strong>
               </div>
-
-              <!-- Right Column -->
               <div class="metric-item">
                 Regnsjanse i dag: <strong id="rain-prob-today">--%</strong>
               </div>
@@ -113,25 +123,20 @@
               </div>
             </div>
 
-            <!-- Dual Forecast Container -->
             <div class="forecast-dual-section">
               <div class="forecast-block">
                 <h3>Neste 3 timer</h3>
-                <div id="forecast-3h" class="forecast-grid">
-                  <!-- Rendered via JS -->
-                </div>
+                <div id="forecast-3h" class="forecast-grid"></div>
               </div>
 
               <div class="forecast-block">
                 <h3>I morgen tidlig</h3>
-                <div id="forecast-tomorrow" class="forecast-grid">
-                  <!-- Rendered via JS -->
-                </div>
+                <div id="forecast-tomorrow" class="forecast-grid"></div>
               </div>
             </div>
           </div>
 
-          <!-- Bottom Right: Favorite Places (~44% width) -->
+          <!-- Bottom Right: Favorite Places -->
           <div class="favorites-section">
             <div id="favorites-list" class="favorites-list">
               <!-- Rendered via JS -->
