@@ -21,9 +21,9 @@
           <div class="transit-meta">
             <h2>NESTE AVGANGER</h2>
             <span id="stop-name" class="stop-name">Busstopp</span>
-            <span id="transit-last-refreshed" class="last-refreshed"
-              Oppdatert: --:--</span
-            >
+            <span id="transit-last-refreshed" class="last-refreshed">
+              Oppdatert: --:--
+            </span>
           </div>
           <div id="transit-list" class="transit-list">
             <div class="loading">Laster avganger...</div>
@@ -77,11 +77,15 @@
               <div class="weather-details">
                 <div id="condition-text" class="condition">Laster...</div>
                 <div class="sub-detail">
-                  Føles som: <strong id="feels-like-temp">--°</strong>
+                  <span>Føles som:</span>
+                  <strong id="feels-like-temp">--°</strong>
                 </div>
                 <div class="sub-detail">
-                  Maks / Min: <strong id="high-temp">--°</strong> /
-                  <strong id="low-temp">--°</strong>
+                  <span>Maks / Min:</span>
+                  <span
+                    ><strong id="high-temp">--°</strong> /
+                    <strong id="low-temp">--°</strong></span
+                  >
                 </div>
               </div>
 

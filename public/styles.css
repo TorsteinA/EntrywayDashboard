@@ -278,7 +278,7 @@ body {
 }
 
 .home-weather-section {
-  flex: 0 0 54%;
+  flex: 0 0 60%;
   display: flex;
   flex-direction: column;
   padding-right: 1.25rem;
@@ -325,15 +325,30 @@ body {
 }
 
 .sub-detail {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
   font-size: 1.05rem;
   color: var(--text-muted);
-  margin-top: 0.1rem;
+  margin-top: 0.2rem;
 }
 
 .sub-detail strong {
   color: var(--text-main);
 }
 
+.metric-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  width: 75%;
+}
+
+.metric-item strong {
+  color: var(--text-main);
+}
 .metrics-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
