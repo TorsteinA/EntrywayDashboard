@@ -108,7 +108,7 @@ function formatRelativeDate(dateInput) {
 
   if (diffDays > 1 && diffDays < 7) {
     const weekday = targetDate.toLocaleDateString("no-NO", { weekday: "long" });
-    return { text: `kommende ${weekday}`, state: "later" };
+    return { text: `på ${weekday}`, state: "later" };
   }
   if (diffDays >= 7 && diffDays < 14) {
     const weekday = targetDate.toLocaleDateString("no-NO", { weekday: "long" });
