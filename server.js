@@ -49,18 +49,31 @@ app.get("/api/config", (req, res) => {
 
 app.get("/api/commute-eta", async (req, res) => {
   const now = new Date();
-  const day = now.getDay(); // 0 = Sun, 6 = Sat
-  const hour = now.getHours();
-  const mins = now.getMinutes();
+
+  // Format current time in Europe/Oslo timezone
+  const osloFormatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Europe/Oslo",
+    weekday: "short",
+    hour: "numeric",
+    minute: "numeric",
+    hour12: false,
+  });
+
+  const parts = osloFormatter.formatToParts(now);
+  const getPart = (type) => parts.find((p) => p.type === type)?.value;
+
+  const weekdayStr = getPart("weekday");
+  const hour = parseInt(getPart("hour"), 10);
+  const mins = parseInt(getPart("minute"), 10);
   const timeInMins = hour * 60 + mins;
 
-  // Active Window: Mon-Fri between 06:30 (390m) and 09:15 (555m)
-  const isWeekday = day >= 1 && day <= 5;
+  // Active Window: Mon-Fri between 06:30 (390m) and 09:15 (555m) local time
+  const isWeekday = ["Mon", "Tue", "Wed", "Thu", "Fri"].includes(weekdayStr);
   const isMorningCommute = isWeekday && timeInMins >= 390 && timeInMins <= 555;
 
-  // Serve cache if fresh
+  // Serve cache if fresh (ensure active property is not overwritten)
   if (cachedCommute && Date.now() - lastCommuteFetch < COMMUTE_CACHE_TTL) {
-    return res.json({ active: isMorningCommute, ...cachedCommute });
+    return res.json({ active: isMorningCommute, data: cachedCommute.data });
   }
 
   const apiKey = process.env.GOOGLE_MAPS_API_KEY;
@@ -74,26 +87,14 @@ app.get("/api/commute-eta", async (req, res) => {
     const destLat = parseFloat(WORK_LAT);
     const destLon = parseFloat(WORK_LON);
 
-    // Google Routes API requires departureTime to be in the future for TRAFFIC_AWARE.
-    // Setting 5 minutes into the future aligns with the "Leaving in 5 mins" widget display.
     const departureDate = new Date(Date.now() + 5 * 60 * 1000);
 
     const requestBody = {
       origin: {
-        location: {
-          latLng: {
-            latitude: originLat,
-            longitude: originLon,
-          },
-        },
+        location: { latLng: { latitude: originLat, longitude: originLon } },
       },
       destination: {
-        location: {
-          latLng: {
-            latitude: destLat,
-            longitude: destLon,
-          },
-        },
+        location: { latLng: { latitude: destLat, longitude: destLon } },
       },
       travelMode: "DRIVE",
       routingPreference: "TRAFFIC_AWARE",
@@ -113,17 +114,11 @@ app.get("/api/commute-eta", async (req, res) => {
       },
     );
 
-    const responseText = await response.text();
-
     if (!response.ok) {
-      console.error(
-        `[Commute ETA Error] HTTP Status: ${response.status} ${response.statusText}`,
-      );
-      console.error("[Commute ETA Error] Google Response Body:", responseText);
       throw new Error(`Google Routes API returned status ${response.status}`);
     }
 
-    const data = JSON.parse(responseText);
+    const data = await response.json();
     const route = data.routes?.[0];
 
     if (route) {
@@ -133,7 +128,6 @@ app.get("/api/commute-eta", async (req, res) => {
       const travelMins = Math.round(durationSec / 60);
       const delayMins = Math.max(0, Math.round((durationSec - normalSec) / 60));
 
-      // Expected arrival time: departureDate + travel duration
       const arrivalDate = new Date(
         departureDate.getTime() + travelMins * 60 * 1000,
       );
@@ -154,7 +148,7 @@ app.get("/api/commute-eta", async (req, res) => {
       };
       lastCommuteFetch = Date.now();
 
-      return res.json({ active: true, ...cachedCommute });
+      return res.json({ active: true, data: cachedCommute.data });
     }
 
     res.json({ active: false, data: null });
