@@ -31,10 +31,10 @@ const FAVORITE_LOCATIONS = process.env.FAVORITE_LOCATIONS
   ? JSON.parse(process.env.FAVORITE_LOCATIONS)
   : [];
 
-// 15-Minute Cache for Single Commute Route
 let cachedCommute = null;
 let lastCommuteFetch = 0;
 const COMMUTE_CACHE_TTL = 15 * 60 * 1000;
+const DEPARTURE_OFFSET_MINS = 5;
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
@@ -87,7 +87,9 @@ app.get("/api/commute-eta", async (req, res) => {
     const destLat = parseFloat(WORK_LAT);
     const destLon = parseFloat(WORK_LON);
 
-    const departureDate = new Date(Date.now() + 5 * 60 * 1000);
+    const departureDate = new Date(
+      Date.now() + DEPARTURE_OFFSET_MINS * 60 * 1000,
+    );
 
     const requestBody = {
       origin: {
@@ -128,22 +130,13 @@ app.get("/api/commute-eta", async (req, res) => {
       const travelMins = Math.round(durationSec / 60);
       const delayMins = Math.max(0, Math.round((durationSec - normalSec) / 60));
 
-      const arrivalDate = new Date(
-        departureDate.getTime() + travelMins * 60 * 1000,
-      );
-      const arrivalTimeStr = arrivalDate.toLocaleTimeString("no-NO", {
-        hour: "2-digit",
-        minute: "2-digit",
-        timeZone: "Europe/Oslo",
-      });
-
       cachedCommute = {
         data: {
           travelMins,
           delayMins,
-          arrivalTimeStr,
+          departureOffsetMins: DEPARTURE_OFFSET_MINS,
           trafficStatus:
-            delayMins >= 5 ? "heavy" : delayMins >= 2 ? "moderate" : "normal",
+            delayMins >= 10 ? "heavy" : delayMins >= 5 ? "moderate" : "normal",
         },
       };
       lastCommuteFetch = Date.now();

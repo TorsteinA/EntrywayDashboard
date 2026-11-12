@@ -417,12 +417,17 @@ async function fetchCommuteETA() {
     const json = await res.json();
 
     if (json.active && json.data) {
-      const { travelMins, delayMins, arrivalTimeStr, trafficStatus } =
-        json.data;
+      const {
+        travelMins,
+        delayMins,
+        departureOffsetMins = 0,
+        trafficStatus,
+      } = json.data;
 
       const pill = document.getElementById("commute-pill");
       const delayEl = document.getElementById("commute-delay");
       const arrivalEl = document.getElementById("commute-arrival");
+      const headerEl = document.getElementById("commute-header");
 
       pill.textContent = `🚗 ${travelMins} min`;
       pill.className = `commute-pill traffic-${trafficStatus}`;
@@ -434,6 +439,16 @@ async function fetchCommuteETA() {
         delayEl.style.display = "none";
       }
 
+      const arrivalDate = new Date(
+        Date.now() + (travelMins + departureOffsetMins) * 60 * 1000,
+      );
+      const arrivalTimeStr = arrivalDate.toLocaleTimeString("no-NO", {
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "Europe/Oslo",
+      });
+
+      headerEl.textContent = `Eta til jobb (om ${departureOffsetMins} min):`;
       arrivalEl.textContent = arrivalTimeStr;
       widget.style.display = "flex";
     } else {
