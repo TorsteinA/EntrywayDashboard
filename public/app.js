@@ -403,7 +403,6 @@ function renderForecastCard(entry) {
     </div>`;
 }
 
-// Fetch Morning Work Commute ETA
 async function fetchCommuteETA() {
   const widget = document.getElementById("commute-widget");
   if (!widget) return;
@@ -632,10 +631,13 @@ function fetchUtilitySchedules() {
   fetchWasteSchedule();
 }
 
-// Master wake handler triggered when screen turns on
+let lastWakeRefresh = 0;
+const WAKE_COOLDOWN_MS = 60 * 1000; // At most once per minute while active
+
 function refreshAllOnWake() {
-  if (document.visibilityState && document.visibilityState !== "visible")
-    return;
+  const now = Date.now();
+  if (now - lastWakeRefresh < WAKE_COOLDOWN_MS) return;
+  lastWakeRefresh = now;
   fetchTransit();
   fetchHomeWeather();
   fetchFavoriteWeather();
@@ -643,9 +645,8 @@ function refreshAllOnWake() {
   fetchCommuteETA();
 }
 
-// Event Listeners for Display Wake (DPMS wake / HDMI signal / focus)
-document.addEventListener("visibilitychange", refreshAllOnWake);
-window.addEventListener("focus", refreshAllOnWake);
+window.addEventListener("mousemove", refreshAllOnWake, { passive: true });
+window.addEventListener("pointerdown", refreshAllOnWake, { passive: true });
 
 // Application Initialization
 async function init() {
