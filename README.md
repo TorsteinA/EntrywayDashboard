@@ -25,6 +25,42 @@ It provides real-time local public transport departures from Ruter/Entur alongsi
 
 ---
 
+## Example Docker Compose
+
+```yaml
+services:
+  dashboard:
+    image: ghcr.io/torsteina/entrywaydashboard:latest
+    container_name: entry_dashboard
+    restart: unless-stopped
+    ports:
+      - 8181:3000
+    environment:
+      # setup
+      - USER_AGENT=MyEntryDashboard/1.0 (admin@local.home)
+      - ET_CLIENT_NAME=myhome-entrykiosk
+      # location & transit
+      - LAT=12.345678
+      - LON=12.345678
+      - WORK_LAT=12.345678
+      - WORK_LON=12.345678
+      - STOP_PLACE_ID=NSR:StopPlace:1234
+      - EXCLUDE_DESTINATION=Oslo Bussterminal
+      - GOOGLE_MAPS_API_KEY=[YourKeyHere]
+      - FAVORITE_LOCATIONS=[{"name":"Place1","lat":12.345678,"lon":12.345678,"travelTimeMins":70},{"name":"Place2","lat":12.345678,"lon":12.345678,"travelTimeMins":40},{"name":"Place3","lat":12.345678,"lon":12.345678,"travelTimeMins":25},{"name":"Place4","lat":12.345678,"lon":12.345678,"travelTimeMins":30},{"name":"Place5","lat":12.345678,"lon":12.345678,"travelTimeMins":60}]
+      # mail
+      - POSTAL_CODE=1234
+      - MYBRING_USER=[mybring username]
+      - MYBRING_KEY=[mybring API Key]
+      - BRING_CLIENT_URL=http://10.0.0.4:8181
+      # waste
+      - ROAF_KOMMUNENR=1234
+      - ROAF_GATENAVN=[Gatenavn til søppelkontainer]
+      - ROAF_GATEKODE=[Gatekoden til søppelkontainer]
+      - ROAF_HUSNR=[Husnr nærmest søppelkontainer]
+networks: {}
+```
+
 ## Project Overview 💻
 
 The entryway dashboard is a part of an old laptop reuse project. I got an old laptop for free and wanted to use it for something useful. This project came about from wanting to reuse rather than throw away.
